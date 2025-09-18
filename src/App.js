@@ -1,3 +1,9 @@
+/*
+ * CaseQuest App
+ * Copyright (c) 2025 stasnim10
+ * Licensed under MIT License
+ */
+
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
