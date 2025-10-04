@@ -1,13 +1,13 @@
 {
   "files": {
-    "main.css": "/simum-casequest/static/css/main.ed5fbe2d.css",
-    "main.js": "/simum-casequest/static/js/main.d7b2994f.js",
+    "main.css": "/simum-casequest/static/css/main.9f999fdc.css",
+    "main.js": "/simum-casequest/static/js/main.8cc3f2c8.js",
     "index.html": "/simum-casequest/index.html",
-    "main.ed5fbe2d.css.map": "/simum-casequest/static/css/main.ed5fbe2d.css.map",
-    "main.d7b2994f.js.map": "/simum-casequest/static/js/main.d7b2994f.js.map"
+    "main.9f999fdc.css.map": "/simum-casequest/static/css/main.9f999fdc.css.map",
+    "main.8cc3f2c8.js.map": "/simum-casequest/static/js/main.8cc3f2c8.js.map"
   },
   "entrypoints": [
-    "static/css/main.ed5fbe2d.css",
-    "static/js/main.d7b2994f.js"
+    "static/css/main.9f999fdc.css",
+    "static/js/main.8cc3f2c8.js"
   ]
 }
