@@ -4,13 +4,13 @@ import { getFirestore } from 'firebase/firestore';
 
 // Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyCNFkmDBk0DIUhywKkhkphXpgtKBK7bfpA",
-  authDomain: "casequest-app.firebaseapp.com",
-  projectId: "casequest-app",
-  storageBucket: "casequest-app.firebasestorage.app",
-  messagingSenderId: "897643088053",
-  appId: "1:897643088053:web:0c14e5d07a52f66d31d6fc",
-  measurementId: "G-CMY2VDQ4VB"
+  apiKey: "AIzaSyBCNdT3rmoZlQLHC5hrnedlI4lcK9A62BQ",
+  authDomain: "casequest-62b9b.firebaseapp.com",
+  projectId: "casequest-62b9b",
+  storageBucket: "casequest-62b9b.firebasestorage.app",
+  messagingSenderId: "329872421373",
+  appId: "1:329872421373:web:828b8c247e79e1233d2994",
+  measurementId: "G-ED7SRYX2XK"
 };
 
 // Initialize Firebase

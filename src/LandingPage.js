@@ -223,7 +223,7 @@ const LandingPage = ({ user, onNavigate }) => {
               <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mb-2">
                 <PenTool className="text-blue-600 w-5 h-5" />
               </div>
-              <span className="text-sm font-medium text-gray-700">Frameworks</span>
+              <span className="text-sm font-medium text-gray-700">Continue Path</span>
             </button>
             <button 
               onClick={() => onNavigate('progress')}
