@@ -1,8 +1,10 @@
 import OpenAI from 'openai';
 
-const apiKey = process.env.REACT_APP_OPENAI_API_KEY;
+// For production deployment, you need to add your API key here temporarily
+// OR set it as a GitHub secret for automated deployment
+const apiKey = process.env.REACT_APP_OPENAI_API_KEY || 'YOUR_OPENAI_API_KEY_HERE';
 
-const openai = apiKey ? new OpenAI({
+const openai = apiKey && apiKey !== 'YOUR_OPENAI_API_KEY_HERE' ? new OpenAI({
   apiKey: apiKey,
   dangerouslyAllowBrowser: true
 }) : null;
