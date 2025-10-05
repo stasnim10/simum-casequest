@@ -3,11 +3,16 @@ class VoiceService {
     this.recognition = null;
     this.synthesis = window.speechSynthesis;
     this.isListening = false;
+    this.isSupported = this.checkSupport();
     this.initSpeechRecognition();
   }
 
+  checkSupport() {
+    return !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+  }
+
   initSpeechRecognition() {
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+    if (this.isSupported) {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       this.recognition = new SpeechRecognition();
       this.recognition.continuous = false;
@@ -17,12 +22,18 @@ class VoiceService {
   }
 
   startListening(onResult, onError) {
-    if (!this.recognition) {
-      onError('Speech recognition not supported');
+    if (!this.recognition || !this.isSupported) {
+      onError('Speech recognition not supported in this browser. Please use Chrome or Edge.');
+      return;
+    }
+
+    if (this.isListening) {
+      this.stopListening();
       return;
     }
 
     this.isListening = true;
+    
     this.recognition.onresult = (event) => {
       const transcript = event.results[0][0].transcript;
       onResult(transcript);
@@ -30,7 +41,8 @@ class VoiceService {
     };
 
     this.recognition.onerror = (event) => {
-      onError(event.error);
+      console.error('Speech recognition error:', event.error);
+      onError(`Speech recognition error: ${event.error}`);
       this.isListening = false;
     };
 
@@ -38,7 +50,13 @@ class VoiceService {
       this.isListening = false;
     };
 
-    this.recognition.start();
+    try {
+      this.recognition.start();
+    } catch (error) {
+      console.error('Failed to start recognition:', error);
+      onError('Failed to start speech recognition');
+      this.isListening = false;
+    }
   }
 
   stopListening() {
@@ -49,9 +67,11 @@ class VoiceService {
   }
 
   speak(text, onEnd) {
-    if (!this.synthesis) return;
+    if (!this.synthesis) {
+      console.warn('Speech synthesis not supported');
+      return;
+    }
 
-    // Cancel any ongoing speech
     this.synthesis.cancel();
 
     const utterance = new SpeechSynthesisUtterance(text);
@@ -62,6 +82,10 @@ class VoiceService {
     if (onEnd) {
       utterance.onend = onEnd;
     }
+
+    utterance.onerror = (event) => {
+      console.error('Speech synthesis error:', event);
+    };
 
     this.synthesis.speak(utterance);
   }
