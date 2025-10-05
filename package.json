@@ -4,7 +4,7 @@
   "private": true,
   "homepage": "https://stasnim10.github.io/simum-casequest",
   "dependencies": {
-    "@testing-library/jest-dom": "^5.16.4",
+    "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^13.3.0",
     "@testing-library/user-event": "^13.5.0",
     "firebase": "^9.23.0",
