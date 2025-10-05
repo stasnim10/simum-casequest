@@ -5,14 +5,15 @@ import {
   Target, User, BookOpen, Trophy, Star, Flame, 
   Menu, X, Play, CheckCircle, Lock, ArrowRight,
   BarChart3, TrendingUp, ChevronRight,
-  Award, ShoppingCart
+  Award, ShoppingCart, Bot, Mic
 } from 'lucide-react';
 import LandingPage from './LandingPage';
 import GuidedPath from './GuidedPath';
 import LessonScreen from './LessonScreen';
 import GamificationHeader from './GamificationHeader';
 import Store from './Store';
-import Leaderboard from './Leaderboard'; // Import Leaderboard
+import Leaderboard from './Leaderboard';
+import AICaseInterview from './components/AICaseInterview';
 import { auth, db } from './firebase';
 import { 
   signInWithEmailAndPassword, 
@@ -116,10 +117,11 @@ const Sidebar = ({ currentPage, setCurrentPage, user, onLogout }) => {
     { id: 'dashboard', label: 'Home', icon: Target },
     { id: 'home', label: 'Dashboard', icon: BarChart3 },
     { id: 'learning', label: 'Learning Path', icon: BookOpen },
+    { id: 'ai-interview', label: 'AI Interview', icon: Bot },
     { id: 'cases', label: 'Case Simulator', icon: Play },
     { id: 'progress', label: 'Progress', icon: TrendingUp },
     { id: 'store', label: 'Store', icon: ShoppingCart },
-    { id: 'leaderboard', label: 'Leaderboard', icon: Trophy }, // Add Leaderboard
+    { id: 'leaderboard', label: 'Leaderboard', icon: Trophy },
   ];
 
   return (
@@ -168,6 +170,49 @@ const MainLearningScreen = ({ user, lessons, onStartLesson }) => (
   </div>
 );
 
+const AIInterviewSelector = ({ onStartInterview }) => {
+  const caseTypes = [
+    { id: 'market-sizing', name: 'Market Sizing', description: 'Estimate market size and potential' },
+    { id: 'profitability', name: 'Profitability', description: 'Analyze profit drivers and optimization' },
+    { id: 'market-entry', name: 'Market Entry', description: 'Strategic market entry decisions' },
+    { id: 'operations', name: 'Operations', description: 'Operational efficiency and process improvement' }
+  ];
+
+  return (
+    <div className="max-w-4xl mx-auto">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">AI Case Interview</h1>
+        <p className="text-gray-600">Practice with our AI interviewer. Choose a case type to begin:</p>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {caseTypes.map((caseType) => (
+          <motion.div
+            key={caseType.id}
+            whileHover={{ scale: 1.02 }}
+            className="bg-white rounded-lg shadow-sm border p-6 cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => onStartInterview(caseType.id)}
+          >
+            <div className="flex items-center mb-4">
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
+                <Bot className="w-6 h-6 text-blue-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">{caseType.name}</h3>
+                <p className="text-sm text-gray-500">{caseType.description}</p>
+              </div>
+            </div>
+            <div className="flex items-center text-blue-600">
+              <Mic className="w-4 h-4 mr-2" />
+              <span className="text-sm">Voice & Text Enabled</span>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const CaseSimulator = ({ cases }) => { return <div>Case Simulator</div> };
 const Progress = ({ user, lessons }) => { return <div>Progress</div> };
 
@@ -181,6 +226,7 @@ const App = () => {
   const [lessons, setLessons] = useState([]);
   const [cases, setCases] = useState([]);
   const [currentLesson, setCurrentLesson] = useState(null);
+  const [currentAIInterview, setCurrentAIInterview] = useState(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -230,6 +276,7 @@ const App = () => {
     await signOut(auth);
     setCurrentPage('dashboard');
     setCurrentLesson(null);
+    setCurrentAIInterview(null);
   };
 
   const updateUserData = (newData) => setUserData(newData);
@@ -346,13 +393,15 @@ const App = () => {
         return <Dashboard user={userData} />;
       case 'learning':
         return <MainLearningScreen user={userData} lessons={lessons} onStartLesson={handleStartLesson} />;
+      case 'ai-interview':
+        return <AIInterviewSelector onStartInterview={setCurrentAIInterview} />;
       case 'cases':
         return <CaseSimulator cases={cases} />;
       case 'progress':
         return <Progress user={userData} lessons={lessons} />;
       case 'store':
         return <Store user={userData} onPurchase={handlePurchaseItem} />;
-      case 'leaderboard': // Render Leaderboard
+      case 'leaderboard':
         return <Leaderboard currentUser={userData} />;
       default:
         return <LandingPage user={userData} onNavigate={setCurrentPage} />;
@@ -365,6 +414,25 @@ const App = () => {
 
   if (!user) {
     return <AuthScreen onLogin={handleLogin} />;
+  }
+
+  if (currentAIInterview) {
+    return (
+      <AnimatePresence mode="wait">
+        <motion.div
+          key="ai-interview"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          transition={{ duration: 0.3 }}
+        >
+          <AICaseInterview 
+            caseType={currentAIInterview} 
+            onComplete={() => setCurrentAIInterview(null)} 
+          />
+        </motion.div>
+      </AnimatePresence>
+    );
   }
 
   if (currentLesson) {
