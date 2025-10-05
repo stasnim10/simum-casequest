@@ -1,11 +1,17 @@
 import OpenAI from 'openai';
 
-const openai = new OpenAI({
-  apiKey: process.env.REACT_APP_OPENAI_API_KEY,
+const apiKey = process.env.REACT_APP_OPENAI_API_KEY;
+
+const openai = apiKey ? new OpenAI({
+  apiKey: apiKey,
   dangerouslyAllowBrowser: true
-});
+}) : null;
 
 export const generateCaseResponse = async (messages, caseType = 'market-sizing') => {
+  if (!openai) {
+    return "AI features are currently unavailable. This is a demo mode - please describe your approach to this market sizing case.";
+  }
+
   const systemPrompt = `You are an experienced McKinsey case interviewer conducting a ${caseType} case interview. 
   
   Guidelines:
@@ -37,6 +43,10 @@ export const generateCaseResponse = async (messages, caseType = 'market-sizing')
 };
 
 export const generateFeedback = async (userResponse, caseContext) => {
+  if (!openai) {
+    return "Good thinking! Continue with your analysis.";
+  }
+
   try {
     const response = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
