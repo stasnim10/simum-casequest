@@ -8,11 +8,14 @@ import {
   Award, ShoppingCart, Bot, Mic
 } from 'lucide-react';
 import LandingPage from './LandingPage';
+import Dashboard from './Dashboard';
 import GuidedPath from './GuidedPath';
 import LessonScreen from './LessonScreen';
 import GamificationHeader from './GamificationHeader';
 import Store from './Store';
 import Leaderboard from './Leaderboard';
+import Progress from './Progress';
+import CaseSimulator from './CaseSimulator';
 import AICaseInterview from './components/AICaseInterview';
 import { auth, db } from './firebase';
 import { 
@@ -154,11 +157,7 @@ const Sidebar = ({ currentPage, setCurrentPage, user, onLogout }) => {
   );
 };
 
-const Dashboard = ({ user }) => (
-  <div>
-    <h1 className="text-3xl font-bold mb-2">Welcome back, {user?.email?.split('@')[0] || 'Consultant'}! 👋</h1>
-  </div>
-);
+// Dashboard component is now imported from separate file
 
 const MainLearningScreen = ({ user, lessons, onStartLesson }) => (
   <div>
@@ -213,8 +212,7 @@ const AIInterviewSelector = ({ onStartInterview }) => {
   );
 };
 
-const CaseSimulator = ({ cases }) => { return <div>Case Simulator</div> };
-const Progress = ({ user, lessons }) => { return <div>Progress</div> };
+// Components are now imported from separate files
 
 // Main App Component
 const App = () => {
@@ -390,13 +388,13 @@ const App = () => {
       case 'dashboard':
         return <LandingPage user={userData} onNavigate={setCurrentPage} />;
       case 'home':
-        return <Dashboard user={userData} />;
+        return <Dashboard user={userData} onNavigate={setCurrentPage} />;
       case 'learning':
         return <MainLearningScreen user={userData} lessons={lessons} onStartLesson={handleStartLesson} />;
       case 'ai-interview':
         return <AIInterviewSelector onStartInterview={setCurrentAIInterview} />;
       case 'cases':
-        return <CaseSimulator cases={cases} />;
+        return <CaseSimulator cases={cases} onNavigate={setCurrentPage} />;
       case 'progress':
         return <Progress user={userData} lessons={lessons} />;
       case 'store':
