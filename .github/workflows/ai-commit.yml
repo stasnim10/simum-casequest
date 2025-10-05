@@ -1,0 +1,40 @@
+name: AI Commit Messages
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  generate-summary:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          
+      - name: Generate AI Summary
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const diff = require('child_process').execSync('git diff HEAD~1').toString();
+            
+            const response = await fetch('https://api.openai.com/v1/chat/completions', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${{ secrets.OPENAI_API_KEY }}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                model: 'gpt-3.5-turbo',
+                messages: [{
+                  role: 'user',
+                  content: `Summarize these code changes in 2-3 sentences:\n\n${diff}`
+                }],
+                max_tokens: 150
+              })
+            });
+            
+            const data = await response.json();
+            const summary = data.choices[0].message.content;
+            
+            console.log('AI Summary:', summary);

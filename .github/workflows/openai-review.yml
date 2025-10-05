@@ -1,0 +1,54 @@
+name: OpenAI Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  ai-review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: AI Code Review
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { execSync } = require('child_process');
+            
+            // Get changed files
+            const files = execSync('git diff --name-only HEAD~1').toString().split('\n').filter(f => f.endsWith('.js') || f.endsWith('.jsx'));
+            
+            for (const file of files) {
+              if (!file) continue;
+              
+              const content = require('fs').readFileSync(file, 'utf8');
+              
+              // Call OpenAI API for review
+              const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${{ secrets.OPENAI_API_KEY }}`,
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  model: 'gpt-3.5-turbo',
+                  messages: [{
+                    role: 'user',
+                    content: `Review this React code for bugs, performance issues, and best practices:\n\n${content}`
+                  }],
+                  max_tokens: 500
+                })
+              });
+              
+              const data = await response.json();
+              const review = data.choices[0].message.content;
+              
+              // Post review as comment
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: `## AI Review for ${file}\n\n${review}`
+              });
+            }
