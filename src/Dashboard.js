@@ -1,45 +1,81 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   BookOpen, Bot, Trophy, TrendingUp, 
   Target, Star, Flame, Award, 
-  ArrowRight, Play, BarChart3 
+  ArrowRight, Play, BarChart3, HelpCircle 
 } from 'lucide-react';
+import Tooltip from './components/Tooltip';
+import CaseMascot from './components/CaseMascot';
 
-const QuickStatCard = ({ icon: Icon, title, value, color, onClick }) => (
+const QuickStatCard = ({ icon: Icon, title, value, color, onClick, tooltip }) => (
   <motion.div
-    whileHover={{ scale: 1.02 }}
+    whileHover={{ scale: 1.05, y: -5 }}
+    whileTap={{ scale: 0.98 }}
     onClick={onClick}
-    className="bg-white rounded-xl shadow-sm p-6 cursor-pointer hover:shadow-md transition-all"
+    className="bg-white rounded-xl shadow-sm p-6 cursor-pointer hover:shadow-xl transition-all relative overflow-hidden"
   >
-    <div className="flex items-center justify-between">
-      <div>
-        <p className="text-sm font-medium text-gray-600">{title}</p>
-        <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
+    <motion.div
+      className="absolute inset-0 bg-gradient-to-br from-transparent to-blue-50 opacity-0"
+      whileHover={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+    />
+    <div className="flex items-center justify-between relative z-10">
+      <div className="flex-1">
+        <div className="flex items-center gap-2">
+          <p className="text-sm font-medium text-gray-600">{title}</p>
+          {tooltip && <Tooltip text={tooltip} />}
+        </div>
+        <motion.p 
+          className="text-2xl font-bold text-gray-900 mt-1"
+          initial={{ scale: 1 }}
+          whileHover={{ scale: 1.1 }}
+          transition={{ type: 'spring', stiffness: 300 }}
+        >
+          {value}
+        </motion.p>
       </div>
-      <div className={`p-3 rounded-lg bg-${color}-100`}>
+      <motion.div 
+        className={`p-3 rounded-lg bg-${color}-100`}
+        whileHover={{ rotate: 360 }}
+        transition={{ duration: 0.6 }}
+      >
         <Icon className={`h-6 w-6 text-${color}-600`} />
-      </div>
+      </motion.div>
     </div>
   </motion.div>
 );
 
 const ActionCard = ({ icon: Icon, title, description, color, onClick }) => (
   <motion.div
-    whileHover={{ scale: 1.02 }}
+    whileHover={{ scale: 1.03, y: -5 }}
+    whileTap={{ scale: 0.98 }}
     onClick={onClick}
-    className="bg-white rounded-xl shadow-sm p-6 cursor-pointer hover:shadow-md transition-all group"
+    className="bg-white rounded-xl shadow-sm p-6 cursor-pointer hover:shadow-xl transition-all group relative overflow-hidden"
   >
-    <div className="flex items-start space-x-4">
-      <div className={`p-3 rounded-lg bg-${color}-100 group-hover:bg-${color}-200 transition-colors`}>
+    <motion.div
+      className={`absolute inset-0 bg-gradient-to-br from-${color}-50 to-transparent opacity-0`}
+      whileHover={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+    />
+    <div className="flex items-start space-x-4 relative z-10">
+      <motion.div 
+        className={`p-3 rounded-lg bg-${color}-100 group-hover:bg-${color}-200 transition-colors`}
+        whileHover={{ scale: 1.1, rotate: 5 }}
+        transition={{ type: 'spring', stiffness: 300 }}
+      >
         <Icon className={`h-6 w-6 text-${color}-600`} />
-      </div>
+      </motion.div>
       <div className="flex-1">
         <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
         <p className="text-gray-600 text-sm mb-3">{description}</p>
-        <div className="flex items-center text-blue-600 text-sm font-medium">
+        <motion.div 
+          className="flex items-center text-blue-600 text-sm font-medium"
+          whileHover={{ x: 5 }}
+          transition={{ type: 'spring', stiffness: 300 }}
+        >
           Get Started <ArrowRight className="h-4 w-4 ml-1" />
-        </div>
+        </motion.div>
       </div>
     </div>
   </motion.div>
@@ -88,11 +124,32 @@ const ProgressRing = ({ percentage, size = 120, strokeWidth = 8, color = "#3B82F
 };
 
 const Dashboard = ({ user, onNavigate }) => {
+  const [mascotMood, setMascotMood] = useState('happy');
+  const [mascotMessage, setMascotMessage] = useState('');
+  
   const completedLessons = user?.completed_lessons?.length || 0;
-  const totalLessons = 20; // Assuming 20 total lessons
+  const totalLessons = 20;
   const completionPercentage = (completedLessons / totalLessons) * 100;
   const currentLevel = user?.current_level || 1;
   const currentLevelXP = (user?.total_xp || 0) % 100;
+
+  useEffect(() => {
+    const streak = user?.current_streak || 0;
+    
+    if (streak >= 7) {
+      setMascotMood('celebrating');
+      setMascotMessage('Amazing streak! 🔥');
+    } else if (completedLessons === 0) {
+      setMascotMood('excited');
+      setMascotMessage("Let's start learning!");
+    } else if (completedLessons > 5) {
+      setMascotMood('happy');
+      setMascotMessage("You're doing great!");
+    } else {
+      setMascotMood('happy');
+      setMascotMessage('Ready to learn?');
+    }
+  }, [user, completedLessons]);
 
   const quickActions = [
     {
@@ -129,6 +186,14 @@ const Dashboard = ({ user, onNavigate }) => {
     <div className="space-y-8">
       {/* Welcome Header */}
       <div className="text-center">
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: 'spring', duration: 0.6 }}
+          className="mb-4"
+        >
+          <CaseMascot mood={mascotMood} message={mascotMessage} size="lg" />
+        </motion.div>
         <motion.h1 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -154,6 +219,7 @@ const Dashboard = ({ user, onNavigate }) => {
           value={currentLevel}
           color="blue"
           onClick={() => onNavigate('progress')}
+          tooltip="Your level increases as you earn XP. Each level = 100 XP!"
         />
         <QuickStatCard
           icon={BookOpen}
@@ -161,6 +227,7 @@ const Dashboard = ({ user, onNavigate }) => {
           value={completedLessons}
           color="green"
           onClick={() => onNavigate('learning')}
+          tooltip="Track how many lessons you've finished. Keep going!"
         />
         <QuickStatCard
           icon={Flame}
@@ -168,6 +235,7 @@ const Dashboard = ({ user, onNavigate }) => {
           value={`${user?.current_streak || 0} days`}
           color="orange"
           onClick={() => onNavigate('progress')}
+          tooltip="Practice daily to build your streak. Don't break the chain!"
         />
         <QuickStatCard
           icon={Star}
@@ -175,6 +243,7 @@ const Dashboard = ({ user, onNavigate }) => {
           value={user?.caseCoins || 0}
           color="purple"
           onClick={() => onNavigate('store')}
+          tooltip="Earn coins by completing lessons. Spend them in the store!"
         />
       </div>
 
@@ -221,6 +290,24 @@ const Dashboard = ({ user, onNavigate }) => {
               <ActionCard {...action} />
             </motion.div>
           ))}
+        </div>
+      </div>
+
+      {/* Beginner Tips */}
+      <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+            <HelpCircle className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">💡 Getting Started Tips</h3>
+            <ul className="space-y-2 text-gray-700">
+              <li>• <strong>Start with Learning Path:</strong> Follow structured lessons to build your foundation</li>
+              <li>• <strong>Practice Daily:</strong> Even 10 minutes a day helps build your streak and skills</li>
+              <li>• <strong>Try AI Interview:</strong> Get comfortable with case interviews in a safe environment</li>
+              <li>• <strong>Earn & Spend Coins:</strong> Complete lessons to earn coins, use them for helpful items</li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>

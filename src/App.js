@@ -17,6 +17,9 @@ import Leaderboard from './Leaderboard';
 import Progress from './Progress';
 import CaseSimulator from './CaseSimulator';
 import AICaseInterview from './components/AICaseInterview';
+import OnboardingTutorial from './components/OnboardingTutorial';
+import HelpButton from './components/HelpButton';
+import CelebrationAnimation from './components/CelebrationAnimation';
 import { auth, db } from './firebase';
 import { 
   signInWithEmailAndPassword, 
@@ -63,7 +66,8 @@ const AuthScreen = ({ onLogin }) => {
           skill_level: 'beginner',
           caseCoins: 0,
           inventory: {},
-          email: userCredential.user.email // Store email
+          email: userCredential.user.email,
+          hasSeenOnboarding: false
         });
       }
       onLogin();
@@ -117,14 +121,14 @@ const AuthScreen = ({ onLogin }) => {
 const Sidebar = ({ currentPage, setCurrentPage, user, onLogout }) => {
   const [isOpen, setIsOpen] = useState(false);
   const menuItems = [
-    { id: 'dashboard', label: 'Home', icon: Target },
-    { id: 'home', label: 'Dashboard', icon: BarChart3 },
-    { id: 'learning', label: 'Learning Path', icon: BookOpen },
-    { id: 'ai-interview', label: 'AI Interview', icon: Bot },
-    { id: 'cases', label: 'Case Simulator', icon: Play },
-    { id: 'progress', label: 'Progress', icon: TrendingUp },
-    { id: 'store', label: 'Store', icon: ShoppingCart },
-    { id: 'leaderboard', label: 'Leaderboard', icon: Trophy },
+    { id: 'dashboard', label: 'Home', icon: Target, desc: 'Your main hub' },
+    { id: 'home', label: 'Dashboard', icon: BarChart3, desc: 'Quick overview' },
+    { id: 'learning', label: 'Learning Path', icon: BookOpen, desc: 'Structured lessons' },
+    { id: 'ai-interview', label: 'AI Interview', icon: Bot, desc: 'Practice with AI' },
+    { id: 'cases', label: 'Case Simulator', icon: Play, desc: 'Real case practice' },
+    { id: 'progress', label: 'Progress', icon: TrendingUp, desc: 'Track your growth' },
+    { id: 'store', label: 'Store', icon: ShoppingCart, desc: 'Spend your coins' },
+    { id: 'leaderboard', label: 'Leaderboard', icon: Trophy, desc: 'Compare rankings' },
   ];
 
   return (
@@ -139,8 +143,12 @@ const Sidebar = ({ currentPage, setCurrentPage, user, onLogout }) => {
             <ul>
               {menuItems.map(item => (
                 <li key={item.id}>
-                  <button onClick={() => { setCurrentPage(item.id); setIsOpen(false); }} className={`w-full flex items-center p-3 rounded-lg ${currentPage === item.id ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-50'}`}>
-                    <item.icon className="h-5 w-5 mr-3" /> {item.label}
+                  <button onClick={() => { setCurrentPage(item.id); setIsOpen(false); }} className={`w-full flex items-center p-3 rounded-lg mb-1 ${currentPage === item.id ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-50'}`}>
+                    <item.icon className="h-5 w-5 mr-3 flex-shrink-0" />
+                    <div className="text-left">
+                      <div className="font-medium">{item.label}</div>
+                      <div className="text-xs text-gray-500">{item.desc}</div>
+                    </div>
                   </button>
                 </li>
               ))}
@@ -171,17 +179,47 @@ const MainLearningScreen = ({ user, lessons, onStartLesson }) => (
 
 const AIInterviewSelector = ({ onStartInterview }) => {
   const caseTypes = [
-    { id: 'market-sizing', name: 'Market Sizing', description: 'Estimate market size and potential' },
-    { id: 'profitability', name: 'Profitability', description: 'Analyze profit drivers and optimization' },
-    { id: 'market-entry', name: 'Market Entry', description: 'Strategic market entry decisions' },
-    { id: 'operations', name: 'Operations', description: 'Operational efficiency and process improvement' }
+    { 
+      id: 'market-sizing', 
+      name: 'Market Sizing', 
+      description: 'Estimate market size and potential',
+      beginner: 'Great for beginners! Learn to estimate numbers logically.',
+      difficulty: 'Beginner Friendly'
+    },
+    { 
+      id: 'profitability', 
+      name: 'Profitability', 
+      description: 'Analyze profit drivers and optimization',
+      beginner: 'Understand how businesses make money.',
+      difficulty: 'Intermediate'
+    },
+    { 
+      id: 'market-entry', 
+      name: 'Market Entry', 
+      description: 'Strategic market entry decisions',
+      beginner: 'Learn how companies decide to enter new markets.',
+      difficulty: 'Intermediate'
+    },
+    { 
+      id: 'operations', 
+      name: 'Operations', 
+      description: 'Operational efficiency and process improvement',
+      beginner: 'Improve business processes and efficiency.',
+      difficulty: 'Advanced'
+    }
   ];
 
   return (
     <div className="max-w-4xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">AI Case Interview</h1>
-        <p className="text-gray-600">Practice with our AI interviewer. Choose a case type to begin:</p>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">AI Case Interview Practice</h1>
+        <p className="text-gray-600 mb-4">Practice with our AI interviewer. Get real-time feedback on your approach.</p>
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <p className="text-sm text-gray-700">
+            💡 <strong>How it works:</strong> Choose a case type, then speak or type your answers. 
+            The AI will guide you through the case and provide feedback on your problem-solving approach.
+          </p>
+        </div>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -192,18 +230,19 @@ const AIInterviewSelector = ({ onStartInterview }) => {
             className="bg-white rounded-lg shadow-sm border p-6 cursor-pointer hover:shadow-md transition-shadow"
             onClick={() => onStartInterview(caseType.id)}
           >
-            <div className="flex items-center mb-4">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                 <Bot className="w-6 h-6 text-blue-600" />
               </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">{caseType.name}</h3>
-                <p className="text-sm text-gray-500">{caseType.description}</p>
-              </div>
+              <span className="text-xs font-medium px-2 py-1 bg-gray-100 rounded-full">
+                {caseType.difficulty}
+              </span>
             </div>
-            <div className="flex items-center text-blue-600">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">{caseType.name}</h3>
+            <p className="text-sm text-gray-600 mb-3">{caseType.beginner}</p>
+            <div className="flex items-center text-blue-600 text-sm">
               <Mic className="w-4 h-4 mr-2" />
-              <span className="text-sm">Voice & Text Enabled</span>
+              <span>Voice & Text Enabled</span>
             </div>
           </motion.div>
         ))}
@@ -220,6 +259,8 @@ const App = () => {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState('dashboard');
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
   
   const [lessons, setLessons] = useState([]);
   const [cases, setCases] = useState([]);
@@ -233,7 +274,12 @@ const App = () => {
         try {
           const userDoc = await getDoc(doc(db, 'users', user.uid));
           if (userDoc.exists()) {
-            setUserData({ ...userDoc.data(), uid: user.uid });
+            const data = { ...userDoc.data(), uid: user.uid };
+            setUserData(data);
+            // Show onboarding for new users
+            if (!data.hasSeenOnboarding) {
+              setShowOnboarding(true);
+            }
           } else {
              await setDoc(doc(db, 'users', user.uid), {
               total_xp: 0,
@@ -245,10 +291,12 @@ const App = () => {
               skill_level: 'beginner',
               caseCoins: 0,
               inventory: {},
-              email: user.email
+              email: user.email,
+              hasSeenOnboarding: false
             });
             const newUserDoc = await getDoc(doc(db, 'users', user.uid));
             setUserData({ ...newUserDoc.data(), uid: user.uid });
+            setShowOnboarding(true);
           }
 
           const lessonsSnapshot = await getDocs(collection(db, 'lessons'));
@@ -269,6 +317,19 @@ const App = () => {
   }, []);
 
   const handleLogin = () => {};
+
+  const handleOnboardingComplete = async () => {
+    setShowOnboarding(false);
+    if (user) {
+      try {
+        await updateDoc(doc(db, 'users', user.uid), {
+          hasSeenOnboarding: true
+        });
+      } catch (error) {
+        console.error('Error updating onboarding status:', error);
+      }
+    }
+  };
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -377,6 +438,8 @@ const App = () => {
         longest_streak: updateData.longest_streak
       }));
 
+      setShowCelebration(true);
+      setTimeout(() => setShowCelebration(false), 2500);
       setCurrentLesson(null);
     } catch (error) {
       console.error("Error completing lesson:", error);
@@ -452,6 +515,9 @@ const App = () => {
   return (
     <AppContext.Provider value={{ user: userData, updateUser: updateUserData }}>
       <div className="min-h-screen gradient-bg">
+        {showOnboarding && <OnboardingTutorial onComplete={handleOnboardingComplete} />}
+        {showCelebration && <CelebrationAnimation />}
+        <HelpButton />
         {currentPage === 'dashboard' ? (
           <AnimatePresence mode="wait">
             <motion.div key={currentPage} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
