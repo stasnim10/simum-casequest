@@ -1,5 +1,11 @@
 # CaseQuest - Gamified Consulting Prep Web App
 
+**© 2025 stasnim10. All Rights Reserved.**
+
+⚠️ **PROPRIETARY SOFTWARE** - This project is protected by copyright law. Unauthorized copying, distribution, or use is strictly prohibited. See [LICENSE](./LICENSE) for details.
+
+---
+
 CaseQuest is a gamified, mobile-first learning platform designed to make consulting and case interview preparation engaging and effective, inspired by the learning model of Duolingo.
 
 ## Features
