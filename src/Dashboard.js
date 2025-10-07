@@ -150,15 +150,27 @@ const Dashboard = ({ user, onNavigate, featureFlags = {} }) => {
       setMascotMessage('Amazing streak! 🔥');
     } else if (completedLessons === 0) {
       setMascotMood('excited');
-      setMascotMessage("Let's start learning!");
+      setMascotMessage("Let's start your consulting journey!");
     } else if (completedLessons > 5) {
       setMascotMood('happy');
-      setMascotMessage("You're doing great!");
+      setMascotMessage("You're making great progress!");
     } else {
       setMascotMood('happy');
-      setMascotMessage('Ready to learn?');
+      setMascotMessage('Ready to level up?');
     }
   }, [user, completedLessons]);
+
+  const getDailyMotivation = () => {
+    const messages = [
+      "Every expert was once a beginner. Keep going! 💪",
+      "Today's practice is tomorrow's success! 🌟",
+      "You're building skills that will last a lifetime! 🚀",
+      "Small steps daily lead to big results! 📈",
+      "Your future consulting career starts with today's lesson! 💼"
+    ];
+    const today = new Date().getDate();
+    return messages[today % messages.length];
+  };
 
   const quickActions = [
     {
@@ -167,6 +179,20 @@ const Dashboard = ({ user, onNavigate, featureFlags = {} }) => {
       description: "5-minute AI interview session to sharpen your skills",
       color: "purple",
       onClick: () => onNavigate('ai-interview')
+    },
+    {
+      icon: BookOpen,
+      title: "Continue Learning",
+      description: "Pick up where you left off in your structured learning path",
+      color: "blue",
+      onClick: () => onNavigate('learning')
+    },
+    {
+      icon: Play,
+      title: "Practice Cases",
+      description: "Dive into real consulting case studies and scenarios",
+      color: "green",
+      onClick: () => onNavigate('cases')
     }
   ];
 
@@ -201,6 +227,18 @@ const Dashboard = ({ user, onNavigate, featureFlags = {} }) => {
         >
           Ready to level up your consulting skills today?
         </motion.p>
+        
+        {/* Daily Motivation */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-100"
+        >
+          <p className="text-center text-gray-700 font-medium">
+            ✨ {getDailyMotivation()}
+          </p>
+        </motion.div>
       </div>
 
       {/* Next Best Action - Feature Flagged */}
@@ -305,10 +343,10 @@ const Dashboard = ({ user, onNavigate, featureFlags = {} }) => {
         </div>
       </div>
 
-      {/* Quick Practice */}
+      {/* Quick Actions */}
       <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Quick Practice</h2>
-        <div className="max-w-md">
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">What would you like to do today?</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {quickActions.map((action, index) => (
             <motion.div
               key={action.title}

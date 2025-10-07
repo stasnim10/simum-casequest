@@ -127,7 +127,7 @@ const LandingPage = ({ user, onNavigate }) => {
         >
           <h2 className="text-xl font-bold text-gray-800 mb-4">Today's Modules</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-green-500">
+            <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-green-500 hover:shadow-md transition-shadow cursor-pointer">
               <div className="flex justify-between items-start mb-3">
                 <h3 className="font-bold text-gray-800">Consulting Mindset</h3>
                 <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded">New</span>
@@ -142,7 +142,7 @@ const LandingPage = ({ user, onNavigate }) => {
                   <div className="w-3 h-3 bg-gray-200 rounded-full"></div>
                 </div>
                 <button 
-                  onClick={() => onNavigate('learning')}
+                  onClick={() => onNavigate('learning', { module: 'consulting-mindset' })}
                   className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-full text-sm font-medium transition"
                 >
                   Start
@@ -150,7 +150,7 @@ const LandingPage = ({ user, onNavigate }) => {
               </div>
             </div>
 
-            <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500">
+            <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500 hover:shadow-md transition-shadow cursor-pointer">
               <div className="flex justify-between items-start mb-3">
                 <h3 className="font-bold text-gray-800">Profitability</h3>
                 <span className="bg-blue-100 text-blue-700 text-xs px-2 py-1 rounded">Review</span>
@@ -165,7 +165,7 @@ const LandingPage = ({ user, onNavigate }) => {
                   <div className="w-3 h-3 bg-gray-200 rounded-full"></div>
                 </div>
                 <button 
-                  onClick={() => onNavigate('learning')}
+                  onClick={() => onNavigate('learning', { module: 'profitability' })}
                   className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-full text-sm font-medium transition"
                 >
                   Practice
@@ -173,7 +173,7 @@ const LandingPage = ({ user, onNavigate }) => {
               </div>
             </div>
 
-            <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-purple-500">
+            <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-purple-500 hover:shadow-md transition-shadow cursor-pointer">
               <div className="flex justify-between items-start mb-3">
                 <h3 className="font-bold text-gray-800">Market Study</h3>
                 <span className="bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded">Hard</span>

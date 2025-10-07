@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Target, User, BookOpen, Trophy, Star, Flame, 
   Menu, X, Play, CheckCircle, Lock, ArrowRight,
-  BarChart3, TrendingUp, ChevronRight,
+  BarChart3, TrendingUp, ChevronRight, ArrowLeft,
   Award, ShoppingCart, Bot, Mic
 } from 'lucide-react';
 import LandingPage from './LandingPage';
@@ -23,6 +23,7 @@ import SessionSummary from './components/SessionSummary';
 import ReviewSession from './components/ReviewSession';
 import HelpButton from './components/HelpButton';
 import CelebrationAnimation from './components/CelebrationAnimation';
+import QuickFeedback from './components/QuickFeedback';
 import remoteConfig from './services/remoteConfig';
 import analytics from './services/analytics';
 import { auth, db } from './firebase';
@@ -126,10 +127,12 @@ const AuthScreen = ({ onLogin }) => {
 const Sidebar = ({ currentPage, setCurrentPage, user, onLogout }) => {
   const [isOpen, setIsOpen] = useState(false);
   const menuItems = [
-    { id: 'home', label: 'Home', icon: Target, desc: 'Your main hub' },
+    { id: 'dashboard', label: 'Home', icon: Target, desc: 'Your main hub' },
     { id: 'learning', label: 'Learn', icon: BookOpen, desc: 'Structured lessons' },
+    { id: 'ai-interview', label: 'AI Interview', icon: Bot, desc: 'Practice with AI' },
     { id: 'cases', label: 'Cases', icon: Play, desc: 'Practice cases' },
     { id: 'progress', label: 'Progress', icon: TrendingUp, desc: 'Track growth' },
+    { id: 'store', label: 'Shop', icon: ShoppingCart, desc: 'Spend coins' },
   ];
 
   return (
@@ -139,12 +142,14 @@ const Sidebar = ({ currentPage, setCurrentPage, user, onLogout }) => {
       </button>
       <div className={`fixed lg:static inset-y-0 left-0 z-40 w-64 bg-white shadow-lg transform ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 transition-transform`}>
         <div className="flex flex-col h-full">
-          <div className="p-6 border-b"><h1 className="text-xl font-bold">CaseQuest</h1></div>
+          <div className="p-6 border-b">
+            <h1 className="text-xl font-bold">CaseQuest</h1>
+          </div>
           <nav className="flex-1 p-4">
             <ul>
               {menuItems.map(item => (
                 <li key={item.id}>
-                  <button onClick={() => { setCurrentPage(item.id); setIsOpen(false); }} className={`w-full flex items-center p-3 rounded-lg mb-1 ${currentPage === item.id ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-50'}`}>
+                  <button onClick={() => { setCurrentPage(item.id); setIsOpen(false); }} className={`w-full flex items-center p-3 rounded-lg mb-1 transition-colors ${currentPage === item.id ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-50'}`}>
                     <item.icon className="h-5 w-5 mr-3 flex-shrink-0" />
                     <div className="text-left">
                       <div className="font-medium">{item.label}</div>
@@ -156,13 +161,42 @@ const Sidebar = ({ currentPage, setCurrentPage, user, onLogout }) => {
             </ul>
           </nav>
           <div className="p-4 border-t">
-            <p>{user?.email?.split('@')[0] || 'User'}</p>
-            <button onClick={onLogout}>Sign Out</button>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                <User className="w-4 h-4 text-blue-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-gray-900 truncate">{user?.email?.split('@')[0] || 'User'}</p>
+                <div className="flex items-center gap-2 text-xs text-gray-500">
+                  <Flame className="w-3 h-3" />
+                  <span>{user?.current_streak || 0} day streak</span>
+                </div>
+              </div>
+            </div>
+            <button onClick={onLogout} className="w-full text-sm text-gray-600 hover:text-gray-900 transition-colors">
+              Sign Out
+            </button>
           </div>
         </div>
       </div>
       {isOpen && <div onClick={() => setIsOpen(false)} className="lg:hidden fixed inset-0 bg-black opacity-50 z-30" />} 
     </>
+  );
+};
+
+const BackButton = ({ currentPage, onBack }) => {
+  if (currentPage === 'dashboard') return null;
+  
+  return (
+    <motion.button
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      onClick={onBack}
+      className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors"
+    >
+      <ArrowLeft className="w-4 h-4" />
+      <span>Back</span>
+    </motion.button>
   );
 };
 
@@ -394,6 +428,12 @@ const App = () => {
 
   const updateUserData = (newData) => setUserData(newData);
 
+  const handleBack = () => {
+    setCurrentPage('dashboard');
+    setCurrentLesson(null);
+    setCurrentAIInterview(null);
+  };
+
   const handleStartLesson = (lesson) => {
     setCurrentLesson(lesson);
   };
@@ -554,20 +594,17 @@ const App = () => {
   const renderCurrentPage = () => {
     switch (currentPage) {
       case 'dashboard':
-        return <LandingPage user={userData} onNavigate={setCurrentPage} />;
-      case 'home':
         return <Dashboard user={userData} onNavigate={setCurrentPage} featureFlags={featureFlags} />;
       case 'learning':
         return <MainLearningScreen user={userData} lessons={lessons} onStartLesson={handleStartLesson} />;
+      case 'ai-interview':
+        return <AIInterviewSelector onStartInterview={setCurrentAIInterview} />;
       case 'cases':
         return <CaseSimulator cases={cases} onNavigate={setCurrentPage} />;
       case 'progress':
         return <Progress user={userData} lessons={lessons} />;
-      // Redirect removed pages to main sections
-      case 'ai-interview':
-        return <AIInterviewSelector onStartInterview={setCurrentAIInterview} />;
       case 'store':
-        return <Dashboard user={userData} onNavigate={setCurrentPage} featureFlags={featureFlags} />;
+        return <Store user={userData} onPurchase={handlePurchaseItem} />;
       case 'leaderboard':
         return <Progress user={userData} lessons={lessons} />;
       default:
@@ -627,28 +664,22 @@ const App = () => {
       <div className="min-h-screen gradient-bg">
         {showOnboarding && <OnboardingTutorial onComplete={handleOnboardingComplete} />}
         {showCelebration && <CelebrationAnimation />}
+        <QuickFeedback />
         <HelpButton />
-        {currentPage === 'dashboard' ? (
-          <AnimatePresence mode="wait">
-            <motion.div key={currentPage} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              {renderCurrentPage()}
-            </motion.div>
-          </AnimatePresence>
-        ) : (
-          <div className="flex">
-            <Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} user={userData} onLogout={handleLogout} />
-            <main className="flex-1 p-8">
-              <GamificationHeader user={userData} /> 
-              <div className="max-w-7xl mx-auto">
-                <AnimatePresence mode="wait">
-                  <motion.div key={currentPage} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
-                    {renderCurrentPage()}
-                  </motion.div>
-                </AnimatePresence>
-              </div>
-            </main>
-          </div>
-        )}
+        <div className="flex">
+          <Sidebar currentPage={currentPage} setCurrentPage={setCurrentPage} user={userData} onLogout={handleLogout} />
+          <main className="flex-1 p-8">
+            {currentPage !== 'dashboard' && <GamificationHeader user={userData} />}
+            <div className="max-w-7xl mx-auto">
+              <BackButton currentPage={currentPage} onBack={handleBack} />
+              <AnimatePresence mode="wait">
+                <motion.div key={currentPage} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+                  {renderCurrentPage()}
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </main>
+        </div>
         
         {/* Enhanced UX Components */}
         {showEnhancedOnboarding && (
