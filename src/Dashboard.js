@@ -7,6 +7,9 @@ import {
 } from 'lucide-react';
 import Tooltip from './components/Tooltip';
 import CaseMascot from './components/CaseMascot';
+import NextBestAction from './components/NextBestAction';
+import StreakProtection from './components/StreakProtection';
+import spacedRepetitionService from './services/spacedRepetition';
 
 const QuickStatCard = ({ icon: Icon, title, value, color, onClick, tooltip }) => (
   <motion.div
@@ -123,7 +126,7 @@ const ProgressRing = ({ percentage, size = 120, strokeWidth = 8, color = "#3B82F
   );
 };
 
-const Dashboard = ({ user, onNavigate }) => {
+const Dashboard = ({ user, onNavigate, featureFlags = {} }) => {
   const [mascotMood, setMascotMood] = useState('happy');
   const [mascotMessage, setMascotMessage] = useState('');
   
@@ -210,6 +213,43 @@ const Dashboard = ({ user, onNavigate }) => {
           Ready to level up your consulting skills today?
         </motion.p>
       </div>
+
+      {/* Next Best Action - Feature Flagged */}
+      {featureFlags.nextBestAction && (
+        <NextBestAction 
+          userStats={user}
+          weakAreas={user?.weakAreas || []}
+          onAction={(actionType, data) => {
+            switch(actionType) {
+              case 'quick_lesson':
+                onNavigate('learning');
+                break;
+              case 'review':
+                onNavigate('review', data);
+                break;
+              case 'continue_module':
+                onNavigate('learning');
+                break;
+              case 'new_case':
+                onNavigate('cases');
+                break;
+            }
+          }}
+        />
+      )}
+
+      {/* Streak Protection - Feature Flagged */}
+      {featureFlags.nextBestAction && (
+        <StreakProtection 
+          userStats={user}
+          onUseFreeze={() => {
+            console.log('Using streak freeze');
+          }}
+          onBuyFreeze={() => {
+            onNavigate('store');
+          }}
+        />
+      )}
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

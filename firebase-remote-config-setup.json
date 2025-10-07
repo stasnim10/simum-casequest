@@ -1,0 +1,107 @@
+{
+  "parameters": {
+    "ux_enhanced_onboarding_enabled": {
+      "defaultValue": {
+        "value": "false"
+      },
+      "description": "Enable enhanced onboarding flow with goal setting"
+    },
+    "ux_next_best_action_enabled": {
+      "defaultValue": {
+        "value": "false"
+      },
+      "description": "Enable next best action recommendations on dashboard"
+    },
+    "ux_session_summary_enabled": {
+      "defaultValue": {
+        "value": "false"
+      },
+      "description": "Enable session completion summary with XP and progress"
+    },
+    "ux_rollout_percentage": {
+      "defaultValue": {
+        "value": "10"
+      },
+      "description": "Percentage of users to include in UX rollout (0-100)"
+    },
+    "endowed_progress_percent": {
+      "defaultValue": {
+        "value": "10"
+      },
+      "description": "Percentage of first module to pre-complete for new users"
+    },
+    "next_action_policy": {
+      "defaultValue": {
+        "value": "weakness_first"
+      },
+      "description": "Policy for next action recommendations: weakness_first or time_budget_first"
+    },
+    "streak_grace_hours": {
+      "defaultValue": {
+        "value": "48"
+      },
+      "description": "Hours of grace period before streak is lost"
+    },
+    "review_batch_size": {
+      "defaultValue": {
+        "value": "10"
+      },
+      "description": "Number of items in a review session"
+    },
+    "sm2_initial_ease": {
+      "defaultValue": {
+        "value": "2.5"
+      },
+      "description": "Initial ease factor for SM-2 spaced repetition"
+    },
+    "sm2_first_interval": {
+      "defaultValue": {
+        "value": "1"
+      },
+      "description": "First interval in days for SM-2"
+    },
+    "sm2_second_interval": {
+      "defaultValue": {
+        "value": "6"
+      },
+      "description": "Second interval in days for SM-2"
+    }
+  },
+  "conditions": [
+    {
+      "name": "ux_rollout_10_percent",
+      "expression": "percent <= 10",
+      "tagColor": "BLUE"
+    },
+    {
+      "name": "ux_rollout_25_percent", 
+      "expression": "percent <= 25",
+      "tagColor": "GREEN"
+    },
+    {
+      "name": "ux_rollout_50_percent",
+      "expression": "percent <= 50", 
+      "tagColor": "ORANGE"
+    }
+  ],
+  "parameterGroups": [
+    {
+      "groupId": "ux_rollout_flags",
+      "description": "Feature flags for UX rollout",
+      "parameters": [
+        "ux_enhanced_onboarding_enabled",
+        "ux_next_best_action_enabled", 
+        "ux_session_summary_enabled",
+        "ux_rollout_percentage"
+      ]
+    },
+    {
+      "groupId": "experiment_parameters",
+      "description": "A/B test parameters",
+      "parameters": [
+        "endowed_progress_percent",
+        "next_action_policy"
+      ]
+    }
+  ]
+}

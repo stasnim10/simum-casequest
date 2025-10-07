@@ -18,8 +18,13 @@ import Progress from './Progress';
 import CaseSimulator from './CaseSimulator';
 import AICaseInterview from './components/AICaseInterview';
 import OnboardingTutorial from './components/OnboardingTutorial';
+import EnhancedOnboarding from './components/EnhancedOnboarding';
+import SessionSummary from './components/SessionSummary';
+import ReviewSession from './components/ReviewSession';
 import HelpButton from './components/HelpButton';
 import CelebrationAnimation from './components/CelebrationAnimation';
+import remoteConfig from './services/remoteConfig';
+import analytics from './services/analytics';
 import { auth, db } from './firebase';
 import { 
   signInWithEmailAndPassword, 
@@ -262,23 +267,74 @@ const App = () => {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
   
+  // New UX states
+  const [showEnhancedOnboarding, setShowEnhancedOnboarding] = useState(false);
+  const [showSessionSummary, setShowSessionSummary] = useState(false);
+  const [sessionSummaryData, setSessionSummaryData] = useState(null);
+  const [featureFlags, setFeatureFlags] = useState({});
+  
   const [lessons, setLessons] = useState([]);
   const [cases, setCases] = useState([]);
   const [currentLesson, setCurrentLesson] = useState(null);
   const [currentAIInterview, setCurrentAIInterview] = useState(null);
 
+  // Initialize Remote Config on app start
+  useEffect(() => {
+    const initializeRemoteConfig = async () => {
+      await remoteConfig.initialize();
+      if (user) {
+        setFeatureFlags({
+          enhancedOnboarding: remoteConfig.isEnhancedOnboardingEnabled(user.uid),
+          nextBestAction: remoteConfig.isNextBestActionEnabled(user.uid),
+          sessionSummary: remoteConfig.isSessionSummaryEnabled(user.uid)
+        });
+      }
+    };
+    initializeRemoteConfig();
+  }, []);
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setUser(user);
+        
+        // Set feature flags for this user
+        setFeatureFlags({
+          enhancedOnboarding: remoteConfig.isEnhancedOnboardingEnabled(user.uid),
+          nextBestAction: remoteConfig.isNextBestActionEnabled(user.uid),
+          sessionSummary: remoteConfig.isSessionSummaryEnabled(user.uid)
+        });
+        
+        // Track feature flag states for cohort analysis
+        analytics.setFeatureFlagState('enhanced_onboarding', remoteConfig.isEnhancedOnboardingEnabled(user.uid));
+        analytics.setFeatureFlagState('next_best_action', remoteConfig.isNextBestActionEnabled(user.uid));
+        analytics.setFeatureFlagState('session_summary', remoteConfig.isSessionSummaryEnabled(user.uid));
+        
+        // Track experiment variants
+        analytics.setExperimentVariant('endowed_progress', `${remoteConfig.getEndowedProgressPercent()}pct`);
+        analytics.setExperimentVariant('next_action_policy', remoteConfig.getNextActionPolicy());
+        
         try {
           const userDoc = await getDoc(doc(db, 'users', user.uid));
           if (userDoc.exists()) {
             const data = { ...userDoc.data(), uid: user.uid };
             setUserData(data);
-            // Show onboarding for new users
-            if (!data.hasSeenOnboarding) {
-              setShowOnboarding(true);
+            
+            // Track daily return
+            if (data.lastActiveAt) {
+              const daysSince = (Date.now() - data.lastActiveAt) / (1000 * 60 * 60 * 24);
+              if (daysSince >= 1) {
+                analytics.trackDailyReturn(Math.floor(daysSince));
+              }
+            }
+            
+            // Show appropriate onboarding
+            if (!data.hasSeenOnboarding && !data.hasCompletedOnboarding) {
+              if (featureFlags.enhancedOnboarding) {
+                setShowEnhancedOnboarding(true);
+              } else {
+                setShowOnboarding(true);
+              }
             }
           } else {
              await setDoc(doc(db, 'users', user.uid), {
@@ -287,12 +343,14 @@ const App = () => {
               longest_streak: 0,
               current_level: 1,
               last_active_date: null,
+              lastActiveAt: Date.now(),
               completed_lessons: [],
               skill_level: 'beginner',
               caseCoins: 0,
               inventory: {},
               email: user.email,
-              hasSeenOnboarding: false
+              hasSeenOnboarding: false,
+              hasCompletedOnboarding: false
             });
             const newUserDoc = await getDoc(doc(db, 'users', user.uid));
             setUserData({ ...newUserDoc.data(), uid: user.uid });
@@ -446,12 +504,63 @@ const App = () => {
     }
   };
 
+  // Enhanced onboarding completion handler
+  const handleEnhancedOnboardingComplete = async (settings) => {
+    try {
+      const cohortWeek = `${new Date().getFullYear()}-W${Math.ceil(new Date().getDate() / 7)}`;
+      
+      await updateDoc(doc(db, 'users', user.uid), {
+        ...settings,
+        lastActiveAt: Date.now(),
+        cohortWeek,
+        hasCompletedOnboarding: true
+      });
+      
+      setUserData(prev => ({ ...prev, ...settings, hasCompletedOnboarding: true }));
+      setShowEnhancedOnboarding(false);
+      
+      analytics.setUserCohort(cohortWeek);
+      analytics.setOnboardingComplete(true);
+      analytics.trackFirstLessonStart();
+    } catch (error) {
+      console.error("Error completing enhanced onboarding:", error);
+    }
+  };
+
+  // Enhanced lesson completion with session summary
+  const handleEnhancedLessonComplete = (lessonResults) => {
+    const isFirstLesson = !userData.hasCompletedOnboarding || userData.completed_lessons?.length === 0;
+    
+    // Complete lesson with existing logic
+    handleCompleteLesson(lessonResults.xpEarned || 50);
+    
+    // Show session summary if enabled
+    if (featureFlags.sessionSummary) {
+      const sessionData = {
+        xpEarned: lessonResults.xpEarned || 50,
+        streakExtended: true,
+        skillsImproved: lessonResults.skillsImproved || [],
+        sessionLength: lessonResults.timeSpent || 5,
+        accuracy: lessonResults.accuracy || 0,
+        nextRecommendation: "Continue with your next lesson",
+        isFirstLesson
+      };
+      
+      setSessionSummaryData(sessionData);
+      setShowSessionSummary(true);
+      
+      if (isFirstLesson) {
+        analytics.trackFirstLessonComplete(lessonResults.timeSpent * 60 || 300);
+      }
+    }
+  };
+
   const renderCurrentPage = () => {
     switch (currentPage) {
       case 'dashboard':
         return <LandingPage user={userData} onNavigate={setCurrentPage} />;
       case 'home':
-        return <Dashboard user={userData} onNavigate={setCurrentPage} />;
+        return <Dashboard user={userData} onNavigate={setCurrentPage} featureFlags={featureFlags} />;
       case 'learning':
         return <MainLearningScreen user={userData} lessons={lessons} onStartLesson={handleStartLesson} />;
       case 'ai-interview':
@@ -538,6 +647,25 @@ const App = () => {
               </div>
             </main>
           </div>
+        )}
+        
+        {/* Enhanced UX Components */}
+        {showEnhancedOnboarding && (
+          <EnhancedOnboarding onComplete={handleEnhancedOnboardingComplete} />
+        )}
+        
+        {showSessionSummary && (
+          <SessionSummary 
+            sessionData={sessionSummaryData}
+            onContinue={() => {
+              setShowSessionSummary(false);
+              analytics.trackNextActionTaken('continue_from_summary');
+            }}
+            onClose={() => {
+              setShowSessionSummary(false);
+              analytics.trackNextActionTaken('close_summary');
+            }}
+          />
         )}
       </div>
     </AppContext.Provider>

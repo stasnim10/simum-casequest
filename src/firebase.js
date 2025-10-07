@@ -22,4 +22,7 @@ export const auth = getAuth(app);
 // Initialize Cloud Firestore and get a reference to the service
 export const db = getFirestore(app);
 
+// Export app for Remote Config and Analytics
+export { app };
+
 export default app;
