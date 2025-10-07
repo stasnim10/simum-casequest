@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/simum-casequest/static/css/main.9d9deebb.css",
+    "main.js": "/simum-casequest/static/js/main.9e78ac49.js",
+    "index.html": "/simum-casequest/index.html",
+    "main.9d9deebb.css.map": "/simum-casequest/static/css/main.9d9deebb.css.map",
+    "main.9e78ac49.js.map": "/simum-casequest/static/js/main.9e78ac49.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.9d9deebb.css",
+    "static/js/main.9e78ac49.js"
+  ]
+}
