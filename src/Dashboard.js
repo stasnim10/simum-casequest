@@ -9,6 +9,7 @@ import Tooltip from './components/Tooltip';
 import CaseMascot from './components/CaseMascot';
 import NextBestAction from './components/NextBestAction';
 import StreakProtection from './components/StreakProtection';
+import LoadingSkeleton from './components/LoadingSkeleton';
 import spacedRepetitionService from './services/spacedRepetition';
 
 const QuickStatCard = ({ icon: Icon, title, value, color, onClick, tooltip }) => (
@@ -129,6 +130,7 @@ const ProgressRing = ({ percentage, size = 120, strokeWidth = 8, color = "#3B82F
 const Dashboard = ({ user, onNavigate, featureFlags = {} }) => {
   const [mascotMood, setMascotMood] = useState('happy');
   const [mascotMessage, setMascotMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(!user);
   
   const completedLessons = user?.completed_lessons?.length || 0;
   const totalLessons = 20;
@@ -137,6 +139,10 @@ const Dashboard = ({ user, onNavigate, featureFlags = {} }) => {
   const currentLevelXP = (user?.total_xp || 0) % 100;
 
   useEffect(() => {
+    if (user) {
+      setIsLoading(false);
+    }
+    
     const streak = user?.current_streak || 0;
     
     if (streak >= 7) {
@@ -184,6 +190,10 @@ const Dashboard = ({ user, onNavigate, featureFlags = {} }) => {
       onClick: () => onNavigate('progress')
     }
   ];
+
+  if (isLoading) {
+    return <LoadingSkeleton type="dashboard" />;
+  }
 
   return (
     <div className="space-y-8">
