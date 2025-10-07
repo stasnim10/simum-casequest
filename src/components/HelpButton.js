@@ -31,12 +31,14 @@ const HelpButton = () => {
   return (
     <>
       <motion.button
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center z-40 hover:bg-blue-700"
+        className="fixed bottom-20 right-4 bg-blue-600 text-white rounded-full shadow-lg flex items-center gap-2 px-4 py-3 z-40 hover:bg-blue-700 transition-colors"
+        style={{ minHeight: '48px' }}
       >
-        <HelpCircle className="w-6 h-6" />
+        <HelpCircle className="w-5 h-5" />
+        <span className="text-sm font-medium">Help</span>
       </motion.button>
 
       <AnimatePresence>

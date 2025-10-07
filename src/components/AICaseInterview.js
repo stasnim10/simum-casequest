@@ -2,9 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Mic, MicOff, Send, Volume2, VolumeX, 
-  MessageCircle, Bot, User, Play, Pause 
+  MessageCircle, Bot, User, Play, Pause, AlertCircle 
 } from 'lucide-react';
-import { generateCaseResponse } from '../services/aiService';
+import LoadingSpinner from './LoadingSpinner';
 import voiceService from '../services/voiceService';
 
 const AICaseInterview = ({ caseType = 'market-sizing', onComplete }) => {
@@ -14,41 +14,98 @@ const AICaseInterview = ({ caseType = 'market-sizing', onComplete }) => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
-    // Start with AI introduction
+    // Check online status
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  useEffect(() => {
+    // Enhanced AI introduction with context
     const initMessage = {
       role: 'assistant',
-      content: `Hi! I'm your AI case interviewer. Today we'll work on a ${caseType.replace('-', ' ')} case. Are you ready to begin? Feel free to speak or type your responses.`
+      content: isOnline 
+        ? `Hi! I'm your AI case interviewer. Today we'll work on a ${caseType.replace('-', ' ')} case. I'll provide dynamic feedback and ask follow-up questions based on your responses. Are you ready to begin?`
+        : `Hi! I'm in demo mode (offline). I'll provide scripted responses for this ${caseType.replace('-', ' ')} case. For full AI interaction, please connect to the internet.`,
+      timestamp: Date.now()
     };
     setMessages([initMessage]);
-    
-    if (voiceEnabled) {
-      voiceService.speak(initMessage.content);
-    }
-  }, [caseType, voiceEnabled]);
+  }, [caseType, isOnline]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  const generateAIResponse = async (conversation, caseType) => {
+    if (!isOnline) {
+      // Fallback scripted responses
+      const scriptedResponses = [
+        "That's an interesting approach. Can you walk me through your reasoning?",
+        "Good thinking. What factors would you consider next?",
+        "How would you structure this problem?",
+        "What assumptions are you making here?",
+        "Can you quantify that estimate?"
+      ];
+      return scriptedResponses[Math.floor(Math.random() * scriptedResponses.length)];
+    }
+
+    try {
+      // Real AI integration (replace with your preferred AI service)
+      const response = await fetch('/api/ai-interview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: conversation,
+          caseType,
+          context: 'consulting_case_interview'
+        })
+      });
+
+      if (!response.ok) throw new Error('AI service unavailable');
+      
+      const data = await response.json();
+      return data.response;
+    } catch (error) {
+      console.warn('AI service failed, using fallback:', error);
+      return "I'm having trouble connecting to my AI brain right now. Can you rephrase your response? Meanwhile, think about how you'd structure this problem step by step.";
+    }
+  };
+
   const handleSendMessage = async (content) => {
     if (!content.trim()) return;
 
-    const userMessage = { role: 'user', content };
+    const userMessage = { 
+      role: 'user', 
+      content, 
+      timestamp: Date.now() 
+    };
     const updatedMessages = [...messages, userMessage];
     setMessages(updatedMessages);
     setInputText('');
     setIsLoading(true);
 
     try {
-      const aiResponse = await generateCaseResponse(updatedMessages, caseType);
-      const assistantMessage = { role: 'assistant', content: aiResponse };
+      const aiResponse = await generateAIResponse(updatedMessages, caseType);
+      const assistantMessage = { 
+        role: 'assistant', 
+        content: aiResponse,
+        timestamp: Date.now()
+      };
       
       setMessages(prev => [...prev, assistantMessage]);
       
-      if (voiceEnabled) {
+      if (voiceEnabled && voiceService && voiceService.speak) {
         setIsSpeaking(true);
         voiceService.speak(aiResponse, () => setIsSpeaking(false));
       }
@@ -61,26 +118,34 @@ const AICaseInterview = ({ caseType = 'market-sizing', onComplete }) => {
 
   const startVoiceInput = () => {
     setIsListening(true);
-    voiceService.startListening(
-      (transcript) => {
-        setIsListening(false);
-        handleSendMessage(transcript);
-      },
-      (error) => {
-        setIsListening(false);
-        console.error('Voice recognition error:', error);
-      }
-    );
+    if (voiceService && voiceService.startListening) {
+      voiceService.startListening(
+        (transcript) => {
+          setIsListening(false);
+          handleSendMessage(transcript);
+        },
+        (error) => {
+          setIsListening(false);
+          console.error('Voice recognition error:', error);
+        }
+      );
+    } else {
+      // Fallback if voice service not available
+      setIsListening(false);
+      alert('Voice input not available in this browser');
+    }
   };
 
   const stopVoiceInput = () => {
     setIsListening(false);
-    voiceService.stopListening();
+    if (voiceService && voiceService.stopListening) {
+      voiceService.stopListening();
+    }
   };
 
   const toggleVoice = () => {
     setVoiceEnabled(!voiceEnabled);
-    if (isSpeaking) {
+    if (isSpeaking && voiceService && voiceService.stopSpeaking) {
       voiceService.stopSpeaking();
       setIsSpeaking(false);
     }
@@ -96,7 +161,15 @@ const AICaseInterview = ({ caseType = 'market-sizing', onComplete }) => {
           </div>
           <div>
             <h1 className="font-semibold text-gray-900">AI Case Interview</h1>
-            <p className="text-sm text-gray-500 capitalize">{caseType.replace('-', ' ')}</p>
+            <div className="flex items-center gap-2">
+              <p className="text-sm text-gray-500 capitalize">{caseType.replace('-', ' ')}</p>
+              <div className="flex items-center gap-1">
+                <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500' : 'bg-orange-500'}`}></div>
+                <span className="text-xs text-gray-400">
+                  {isOnline ? 'AI Active' : 'Demo Mode'}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
         
@@ -143,6 +216,29 @@ const AICaseInterview = ({ caseType = 'market-sizing', onComplete }) => {
             </motion.div>
           ))}
         </AnimatePresence>
+        
+        {/* AI Thinking Indicator */}
+        {isLoading && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex justify-start"
+          >
+            <div className="flex items-start space-x-2 max-w-xs lg:max-w-md">
+              <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center">
+                <Bot className="text-white w-4 h-4" />
+              </div>
+              <div className="px-4 py-2 rounded-lg bg-white text-gray-900 shadow-sm">
+                <div className="flex items-center gap-2">
+                  <LoadingSpinner size="sm" text="" />
+                  <span className="text-sm text-gray-600">
+                    {isOnline ? 'AI is thinking...' : 'Processing...'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
         
         {isLoading && (
           <motion.div
