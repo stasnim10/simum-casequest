@@ -126,14 +126,10 @@ const AuthScreen = ({ onLogin }) => {
 const Sidebar = ({ currentPage, setCurrentPage, user, onLogout }) => {
   const [isOpen, setIsOpen] = useState(false);
   const menuItems = [
-    { id: 'dashboard', label: 'Home', icon: Target, desc: 'Your main hub' },
-    { id: 'home', label: 'Dashboard', icon: BarChart3, desc: 'Quick overview' },
-    { id: 'learning', label: 'Learning Path', icon: BookOpen, desc: 'Structured lessons' },
-    { id: 'ai-interview', label: 'AI Interview', icon: Bot, desc: 'Practice with AI' },
-    { id: 'cases', label: 'Case Simulator', icon: Play, desc: 'Real case practice' },
-    { id: 'progress', label: 'Progress', icon: TrendingUp, desc: 'Track your growth' },
-    { id: 'store', label: 'Store', icon: ShoppingCart, desc: 'Spend your coins' },
-    { id: 'leaderboard', label: 'Leaderboard', icon: Trophy, desc: 'Compare rankings' },
+    { id: 'home', label: 'Home', icon: Target, desc: 'Your main hub' },
+    { id: 'learning', label: 'Learn', icon: BookOpen, desc: 'Structured lessons' },
+    { id: 'cases', label: 'Cases', icon: Play, desc: 'Practice cases' },
+    { id: 'progress', label: 'Progress', icon: TrendingUp, desc: 'Track growth' },
   ];
 
   return (
@@ -563,18 +559,19 @@ const App = () => {
         return <Dashboard user={userData} onNavigate={setCurrentPage} featureFlags={featureFlags} />;
       case 'learning':
         return <MainLearningScreen user={userData} lessons={lessons} onStartLesson={handleStartLesson} />;
-      case 'ai-interview':
-        return <AIInterviewSelector onStartInterview={setCurrentAIInterview} />;
       case 'cases':
         return <CaseSimulator cases={cases} onNavigate={setCurrentPage} />;
       case 'progress':
         return <Progress user={userData} lessons={lessons} />;
+      // Redirect removed pages to main sections
+      case 'ai-interview':
+        return <AIInterviewSelector onStartInterview={setCurrentAIInterview} />;
       case 'store':
-        return <Store user={userData} onPurchase={handlePurchaseItem} />;
+        return <Dashboard user={userData} onNavigate={setCurrentPage} featureFlags={featureFlags} />;
       case 'leaderboard':
-        return <Leaderboard currentUser={userData} />;
+        return <Progress user={userData} lessons={lessons} />;
       default:
-        return <LandingPage user={userData} onNavigate={setCurrentPage} />;
+        return <Dashboard user={userData} onNavigate={setCurrentPage} featureFlags={featureFlags} />;
     }
   };
 

@@ -162,32 +162,11 @@ const Dashboard = ({ user, onNavigate, featureFlags = {} }) => {
 
   const quickActions = [
     {
-      icon: BookOpen,
-      title: "Continue Learning",
-      description: "Pick up where you left off in your learning path",
-      color: "blue",
-      onClick: () => onNavigate('learning')
-    },
-    {
       icon: Bot,
-      title: "AI Interview",
-      description: "Practice with our AI interviewer for realistic case prep",
+      title: "Quick Practice",
+      description: "5-minute AI interview session to sharpen your skills",
       color: "purple",
       onClick: () => onNavigate('ai-interview')
-    },
-    {
-      icon: Play,
-      title: "Case Simulator",
-      description: "Solve real consulting cases from top firms",
-      color: "green",
-      onClick: () => onNavigate('cases')
-    },
-    {
-      icon: BarChart3,
-      title: "View Progress",
-      description: "Track your learning journey and skill development",
-      color: "orange",
-      onClick: () => onNavigate('progress')
     }
   ];
 
@@ -326,10 +305,10 @@ const Dashboard = ({ user, onNavigate, featureFlags = {} }) => {
         </div>
       </div>
 
-      {/* Quick Actions */}
+      {/* Quick Practice */}
       <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">What would you like to do?</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">Quick Practice</h2>
+        <div className="max-w-md">
           {quickActions.map((action, index) => (
             <motion.div
               key={action.title}
