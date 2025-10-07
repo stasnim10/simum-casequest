@@ -2,87 +2,35 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Mic, MicOff, Send, Volume2, VolumeX, 
-  MessageCircle, Bot, User, Play, Pause, AlertCircle 
+  Bot, User, TrendingUp, Target, Brain
 } from 'lucide-react';
 import LoadingSpinner from './LoadingSpinner';
-import voiceService from '../services/voiceService';
+import SmartCaseAI from '../services/smartCaseAI';
 
-const AICaseInterview = ({ caseType = 'market-sizing', onComplete }) => {
+const AICaseInterview = ({ caseType = 'profitability', onComplete }) => {
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
-  const [isListening, setIsListening] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [voiceEnabled, setVoiceEnabled] = useState(true);
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [aiEngine] = useState(new SmartCaseAI());
+  const [currentScore, setCurrentScore] = useState({ structure: 0, math: 0, insight: 0 });
+  const [showScore, setShowScore] = useState(false);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
-    // Check online status
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-    
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-    
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
-
-  useEffect(() => {
-    // Enhanced AI introduction with context
+    aiEngine.reset(caseType);
     const initMessage = {
       role: 'assistant',
-      content: isOnline 
-        ? `Hi! I'm your AI case interviewer. Today we'll work on a ${caseType.replace('-', ' ')} case. I'll provide dynamic feedback and ask follow-up questions based on your responses. Are you ready to begin?`
-        : `Hi! I'm in demo mode (offline). I'll provide scripted responses for this ${caseType.replace('-', ' ')} case. For full AI interaction, please connect to the internet.`,
+      content: `Hi! I'm your Smart AI interviewer. Today we'll work on a ${caseType.replace('-', ' ')} case. I'll analyze your responses and provide real-time feedback. Ready to begin?`,
       timestamp: Date.now()
     };
     setMessages([initMessage]);
-  }, [caseType, isOnline]);
+  }, [caseType, aiEngine]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const generateAIResponse = async (conversation, caseType) => {
-    if (!isOnline) {
-      // Fallback scripted responses
-      const scriptedResponses = [
-        "That's an interesting approach. Can you walk me through your reasoning?",
-        "Good thinking. What factors would you consider next?",
-        "How would you structure this problem?",
-        "What assumptions are you making here?",
-        "Can you quantify that estimate?"
-      ];
-      return scriptedResponses[Math.floor(Math.random() * scriptedResponses.length)];
-    }
-
-    try {
-      // Real AI integration (replace with your preferred AI service)
-      const response = await fetch('/api/ai-interview', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: conversation,
-          caseType,
-          context: 'consulting_case_interview'
-        })
-      });
-
-      if (!response.ok) throw new Error('AI service unavailable');
-      
-      const data = await response.json();
-      return data.response;
-    } catch (error) {
-      console.warn('AI service failed, using fallback:', error);
-      return "I'm having trouble connecting to my AI brain right now. Can you rephrase your response? Meanwhile, think about how you'd structure this problem step by step.";
-    }
-  };
-
-  const handleSendMessage = async (content) => {
+  const handleSendMessage = (content) => {
     if (!content.trim()) return;
 
     const userMessage = { 
@@ -90,65 +38,35 @@ const AICaseInterview = ({ caseType = 'market-sizing', onComplete }) => {
       content, 
       timestamp: Date.now() 
     };
-    const updatedMessages = [...messages, userMessage];
-    setMessages(updatedMessages);
+    setMessages(prev => [...prev, userMessage]);
     setInputText('');
     setIsLoading(true);
 
-    try {
-      const aiResponse = await generateAIResponse(updatedMessages, caseType);
-      const assistantMessage = { 
-        role: 'assistant', 
-        content: aiResponse,
-        timestamp: Date.now()
-      };
-      
-      setMessages(prev => [...prev, assistantMessage]);
-      
-      if (voiceEnabled && voiceService && voiceService.speak) {
-        setIsSpeaking(true);
-        voiceService.speak(aiResponse, () => setIsSpeaking(false));
+    setTimeout(() => {
+      try {
+        const aiResponse = aiEngine.getResponse(content, caseType);
+        
+        const assistantMessage = { 
+          role: 'assistant', 
+          content: aiResponse.message,
+          feedback: aiResponse.feedback,
+          hint: aiResponse.hint,
+          timestamp: Date.now()
+        };
+        
+        setMessages(prev => [...prev, assistantMessage]);
+        setCurrentScore(aiResponse.score);
+      } catch (error) {
+        console.error('Error getting AI response:', error);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error('Error getting AI response:', error);
-    } finally {
-      setIsLoading(false);
-    }
+    }, 1000 + Math.random() * 1000);
   };
 
-  const startVoiceInput = () => {
-    setIsListening(true);
-    if (voiceService && voiceService.startListening) {
-      voiceService.startListening(
-        (transcript) => {
-          setIsListening(false);
-          handleSendMessage(transcript);
-        },
-        (error) => {
-          setIsListening(false);
-          console.error('Voice recognition error:', error);
-        }
-      );
-    } else {
-      // Fallback if voice service not available
-      setIsListening(false);
-      alert('Voice input not available in this browser');
-    }
-  };
-
-  const stopVoiceInput = () => {
-    setIsListening(false);
-    if (voiceService && voiceService.stopListening) {
-      voiceService.stopListening();
-    }
-  };
-
-  const toggleVoice = () => {
-    setVoiceEnabled(!voiceEnabled);
-    if (isSpeaking && voiceService && voiceService.stopSpeaking) {
-      voiceService.stopSpeaking();
-      setIsSpeaking(false);
-    }
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    handleSendMessage(inputText);
   };
 
   return (
@@ -160,14 +78,12 @@ const AICaseInterview = ({ caseType = 'market-sizing', onComplete }) => {
             <Bot className="text-white w-6 h-6" />
           </div>
           <div>
-            <h1 className="font-semibold text-gray-900">AI Case Interview</h1>
+            <h1 className="font-semibold text-gray-900">Smart AI Interviewer</h1>
             <div className="flex items-center gap-2">
               <p className="text-sm text-gray-500 capitalize">{caseType.replace('-', ' ')}</p>
               <div className="flex items-center gap-1">
-                <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500' : 'bg-orange-500'}`}></div>
-                <span className="text-xs text-gray-400">
-                  {isOnline ? 'AI Active' : 'Demo Mode'}
-                </span>
+                <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                <span className="text-xs text-gray-400">Smart AI Active</span>
               </div>
             </div>
           </div>
@@ -175,10 +91,11 @@ const AICaseInterview = ({ caseType = 'market-sizing', onComplete }) => {
         
         <div className="flex items-center space-x-2">
           <button
-            onClick={toggleVoice}
-            className={`p-2 rounded-full ${voiceEnabled ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'}`}
+            onClick={() => setShowScore(!showScore)}
+            className="p-2 rounded-full bg-purple-100 text-purple-600 hover:bg-purple-200"
+            title="Toggle Score"
           >
-            {voiceEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+            <TrendingUp className="w-5 h-5" />
           </button>
           
           {onComplete && (
@@ -191,6 +108,39 @@ const AICaseInterview = ({ caseType = 'market-sizing', onComplete }) => {
           )}
         </div>
       </div>
+
+      {/* Real-time Score Display */}
+      {showScore && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-r from-purple-50 to-blue-50 p-4 border-b"
+        >
+          <div className="flex justify-between items-center max-w-md">
+            <div className="text-center">
+              <div className="flex items-center gap-1 mb-1">
+                <Brain className="w-4 h-4 text-purple-600" />
+                <span className="text-sm font-medium text-gray-700">Structure</span>
+              </div>
+              <div className="text-lg font-bold text-purple-600">{currentScore.structure}</div>
+            </div>
+            <div className="text-center">
+              <div className="flex items-center gap-1 mb-1">
+                <Target className="w-4 h-4 text-blue-600" />
+                <span className="text-sm font-medium text-gray-700">Math</span>
+              </div>
+              <div className="text-lg font-bold text-blue-600">{currentScore.math}</div>
+            </div>
+            <div className="text-center">
+              <div className="flex items-center gap-1 mb-1">
+                <TrendingUp className="w-4 h-4 text-green-600" />
+                <span className="text-sm font-medium text-gray-700">Insight</span>
+              </div>
+              <div className="text-lg font-bold text-green-600">{currentScore.insight}</div>
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -211,6 +161,24 @@ const AICaseInterview = ({ caseType = 'market-sizing', onComplete }) => {
                 </div>
                 <div className={`px-4 py-2 rounded-lg ${message.role === 'user' ? 'bg-blue-600 text-white' : 'bg-white text-gray-900 shadow-sm'}`}>
                   <p className="text-sm">{message.content}</p>
+                  
+                  {/* Show feedback and hints for AI messages */}
+                  {message.role === 'assistant' && (message.feedback || message.hint) && (
+                    <div className="mt-2 pt-2 border-t border-gray-100">
+                      {message.feedback && (
+                        <div className="flex items-center gap-1 mb-1">
+                          <TrendingUp className="w-3 h-3 text-green-600" />
+                          <span className="text-xs text-green-700 font-medium">{message.feedback}</span>
+                        </div>
+                      )}
+                      {message.hint && (
+                        <div className="flex items-center gap-1">
+                          <Brain className="w-3 h-3 text-purple-600" />
+                          <span className="text-xs text-purple-700">{message.hint}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </motion.div>
@@ -232,29 +200,8 @@ const AICaseInterview = ({ caseType = 'market-sizing', onComplete }) => {
                 <div className="flex items-center gap-2">
                   <LoadingSpinner size="sm" text="" />
                   <span className="text-sm text-gray-600">
-                    {isOnline ? 'AI is thinking...' : 'Processing...'}
+                    AI is analyzing your response...
                   </span>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-        
-        {isLoading && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="flex justify-start"
-          >
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
-                <Bot className="text-white w-4 h-4" />
-              </div>
-              <div className="bg-white px-4 py-2 rounded-lg shadow-sm">
-                <div className="flex space-x-1">
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                 </div>
               </div>
             </div>
@@ -266,42 +213,23 @@ const AICaseInterview = ({ caseType = 'market-sizing', onComplete }) => {
 
       {/* Input */}
       <div className="bg-white border-t p-4">
-        <div className="flex items-center space-x-2">
-          <div className="flex-1 relative">
-            <input
-              type="text"
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSendMessage(inputText)}
-              placeholder="Type your response or use voice..."
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              disabled={isListening || isLoading}
-            />
-          </div>
-          
-          <button
-            onClick={isListening ? stopVoiceInput : startVoiceInput}
+        <form onSubmit={handleSubmit} className="flex space-x-2">
+          <input
+            type="text"
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+            placeholder="Type your response..."
+            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             disabled={isLoading}
-            className={`p-2 rounded-full ${isListening ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-          >
-            {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
-          </button>
-          
+          />
           <button
-            onClick={() => handleSendMessage(inputText)}
-            disabled={!inputText.trim() || isLoading}
-            className="p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:opacity-50"
+            type="submit"
+            disabled={isLoading || !inputText.trim()}
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
           >
-            <Send className="w-5 h-5" />
+            <Send className="w-4 h-4" />
           </button>
-        </div>
-        
-        {isSpeaking && (
-          <div className="mt-2 flex items-center justify-center text-sm text-gray-500">
-            <Volume2 className="w-4 h-4 mr-1 animate-pulse" />
-            AI is speaking...
-          </div>
-        )}
+        </form>
       </div>
     </div>
   );
