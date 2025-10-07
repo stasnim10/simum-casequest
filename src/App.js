@@ -615,7 +615,11 @@ const App = () => {
           exit={{ opacity: 0, scale: 0.95 }}
           transition={{ duration: 0.3 }}
         >
-          <LessonScreen lesson={currentLesson} onComplete={handleCompleteLesson} />
+          <LessonScreen 
+            lesson={currentLesson} 
+            onComplete={handleCompleteLesson}
+            onBack={() => setCurrentLesson(null)}
+          />
         </motion.div>
       </AnimatePresence>
     );

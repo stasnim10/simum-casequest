@@ -1,11 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle, XCircle, ArrowRight, Star } from 'lucide-react';
+import { CheckCircle, XCircle, ArrowRight, Star, ArrowLeft, X } from 'lucide-react';
 import CaseMascot from './components/CaseMascot';
 import CelebrationAnimation from './components/CelebrationAnimation';
 
-const LessonScreen = ({ lesson, onComplete }) => {
+const LessonScreen = ({ lesson, onComplete, onBack }) => {
   const [view, setView] = useState('LEARNING');
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [quizStatus, setQuizStatus] = useState(null);
@@ -56,6 +56,17 @@ const LessonScreen = ({ lesson, onComplete }) => {
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col justify-center items-center p-4 font-sans">
+      {/* Back Button */}
+      <div className="fixed top-4 left-4 z-10">
+        <button
+          onClick={onBack}
+          className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-sm hover:shadow-md transition-all text-gray-600 hover:text-gray-800"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span className="text-sm font-medium">Back</span>
+        </button>
+      </div>
+      
       {showCelebration && <CelebrationAnimation />}
       <div className="w-full max-w-2xl">
         <div className="bg-white rounded-xl shadow-2xl overflow-hidden">

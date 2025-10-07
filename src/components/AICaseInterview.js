@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Mic, MicOff, Send, Volume2, VolumeX, 
-  Bot, User, TrendingUp, Target, Brain
+  Bot, User, TrendingUp, Target, Brain, ArrowLeft
 } from 'lucide-react';
 import LoadingSpinner from './LoadingSpinner';
 import SmartCaseAI from '../services/smartCaseAI';
@@ -74,6 +74,14 @@ const AICaseInterview = ({ caseType = 'profitability', onComplete }) => {
       {/* Header */}
       <div className="bg-white shadow-sm p-4 flex justify-between items-center">
         <div className="flex items-center space-x-3">
+          <button
+            onClick={onComplete}
+            className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span className="text-sm font-medium">Back</span>
+          </button>
+          
           <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center">
             <Bot className="text-white w-6 h-6" />
           </div>
@@ -97,15 +105,6 @@ const AICaseInterview = ({ caseType = 'profitability', onComplete }) => {
           >
             <TrendingUp className="w-5 h-5" />
           </button>
-          
-          {onComplete && (
-            <button
-              onClick={onComplete}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm"
-            >
-              End Session
-            </button>
-          )}
         </div>
       </div>
 

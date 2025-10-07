@@ -36,12 +36,12 @@ const LandingPage = ({ user, onNavigate }) => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8 pb-20">
-        {/* Subject Selection */}
+        {/* Welcome Message */}
         <div className="mb-8 text-center">
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Continue Learning</h2>
-          <div className="inline-flex items-center bg-blue-100 px-4 py-1 rounded-full">
-            <span className="text-blue-700 font-medium">Consulting Cases</span>
-            <ChevronDown className="ml-2 text-blue-600 w-4 h-4" />
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Welcome back! 👋</h2>
+          <div className="inline-flex items-center bg-gradient-to-r from-blue-100 to-purple-100 px-6 py-2 rounded-full">
+            <Star className="mr-2 text-blue-600 w-5 h-5" />
+            <span className="text-gray-700 font-medium">Ready to level up your consulting skills?</span>
           </div>
         </div>
 

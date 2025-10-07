@@ -55,19 +55,19 @@ const HelpButton = () => {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto z-50 p-8"
+              className="fixed inset-4 bg-white rounded-2xl shadow-2xl z-50 flex flex-col max-h-[90vh]"
             >
-              <div className="flex justify-between items-center mb-6">
+              <div className="flex justify-between items-center p-6 border-b">
                 <h2 className="text-2xl font-bold text-gray-900">Need Help? 🤔</h2>
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-gray-400 hover:text-gray-600 p-2"
                 >
                   <X className="w-6 h-6" />
                 </button>
               </div>
 
-              <div className="space-y-6">
+              <div className="flex-1 overflow-y-auto p-6 space-y-6">
                 {helpTopics.map((topic, index) => (
                   <div key={index} className="flex gap-4">
                     <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -81,7 +81,7 @@ const HelpButton = () => {
                 ))}
               </div>
 
-              <div className="mt-8 p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="p-6 bg-green-50 border-t">
                 <p className="text-sm text-gray-700">
                   <strong>Quick Tip:</strong> Hover over the <HelpCircle className="w-4 h-4 inline text-gray-400" /> icons 
                   throughout the app for quick explanations!
