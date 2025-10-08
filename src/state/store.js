@@ -90,6 +90,17 @@ const useStore = create(
         // Mock: assume 70% of total XP was earned this week
         return Math.floor(state.user.xp * 0.7);
       },
+
+      resetDemo: () => {
+        set({
+          user: { name: 'Demo', xp: 0, streak: 0, coins: 0 },
+          lessonProgress: {},
+          lastCompletionDate: null,
+          badges: [],
+          streakHistory: [],
+        });
+        localStorage.removeItem('casequest-store');
+      },
     }),
     {
       name: 'casequest-store',

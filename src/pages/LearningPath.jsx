@@ -34,7 +34,8 @@ export default function LearningPath() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      <div className="max-w-3xl mx-auto p-4">
       <h1 className="text-3xl font-bold text-gray-900 mb-6">Learning Path</h1>
       
       {modules.map((module) => {
@@ -102,6 +103,7 @@ export default function LearningPath() {
           </div>
         );
       })}
+      </div>
     </div>
   );
 }

@@ -1,11 +1,25 @@
-import { Link } from 'react-router-dom';
-import { BookOpen, Bot, TrendingUp, Star, Coins, Flame, Award, ArrowRight } from 'lucide-react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { BookOpen, Bot, TrendingUp, Star, Coins, Flame, Award, ArrowRight, RotateCcw } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
 import useStore from '../state/store';
 import { getLesson } from '../data/api';
 
 export default function Dashboard() {
-  const { user, lessonProgress, badges, getLeaderboard } = useStore();
+  const [searchParams] = useSearchParams();
+  const isPitchMode = searchParams.get('pitch') === '1';
+  const [animationStep, setAnimationStep] = useState(0);
+  const { user, lessonProgress, badges, getLeaderboard, resetDemo } = useStore();
+
+  // Pitch mode: sequential animations
+  useEffect(() => {
+    if (isPitchMode) {
+      const interval = setInterval(() => {
+        setAnimationStep((prev) => (prev + 1) % 4);
+      }, 3000);
+      return () => clearInterval(interval);
+    }
+  }, [isPitchMode]);
 
   // Streak heatmap (last 7 days)
   const getStreakDays = () => {
@@ -14,7 +28,6 @@ export default function Dashboard() {
     for (let i = 6; i >= 0; i--) {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
-      const dateStr = date.toDateString();
       days.push({
         day: date.toLocaleDateString('en-US', { weekday: 'short' }),
         active: i === 0 ? user.streak > 0 : Math.random() > 0.5, // Mock for demo
@@ -74,11 +87,32 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="max-w-6xl mx-auto p-4 space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      <div className="max-w-6xl mx-auto p-4 space-y-6">
+      
+      {/* Reset Demo Button */}
+      {!isPitchMode && (
+        <div className="flex justify-end">
+          <button
+            onClick={() => {
+              if (window.confirm('Reset all demo data?')) {
+                resetDemo();
+                window.location.reload();
+              }
+            }}
+            className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:text-gray-900 bg-white rounded-lg shadow-sm hover:shadow-md transition-all"
+          >
+            <RotateCcw className="w-4 h-4" />
+            Reset Demo
+          </button>
+        </div>
+      )}
+
       {/* Greeting & Streak */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
+        animate={{ opacity: isPitchMode && animationStep === 0 ? 1 : 1, y: 0, scale: isPitchMode && animationStep === 0 ? 1.02 : 1 }}
+        transition={{ duration: 0.5 }}
         className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl p-6 text-white"
       >
         <h1 className="text-3xl font-bold mb-4">Hi, {user.name}! 👋</h1>
@@ -106,7 +140,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
+          animate={{ opacity: 1, scale: isPitchMode && animationStep === 1 ? 1.05 : 1 }}
           transition={{ delay: 0.1 }}
           className="bg-white rounded-2xl shadow-sm p-4"
         >
@@ -166,7 +200,7 @@ export default function Dashboard() {
       {/* Badges */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
+        animate={{ opacity: 1, y: 0, scale: isPitchMode && animationStep === 2 ? 1.02 : 1 }}
         transition={{ delay: 0.5 }}
         className="bg-white rounded-2xl shadow-sm p-6"
       >
@@ -287,6 +321,7 @@ export default function Dashboard() {
           <p className="text-sm text-gray-600">See your ranking</p>
         </Link>
       </div>
+    </div>
     </div>
   );
 }
