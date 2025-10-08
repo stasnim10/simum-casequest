@@ -9,11 +9,15 @@ import Dashboard from './pages/Dashboard';
 import Leaderboard from './pages/Leaderboard';
 import Review from './pages/Review';
 import useStore from './state/store';
+import { initAnalytics } from './lib/analytics';
 
 function App() {
   const { setUser } = useStore();
 
   useEffect(() => {
+    // Initialize analytics
+    initAnalytics(import.meta.env.VITE_POSTHOG_KEY, import.meta.env.VITE_POSTHOG_HOST);
+
     // Check for demo mode
     const params = new URLSearchParams(window.location.search);
     if (params.get('demo') === '1') {

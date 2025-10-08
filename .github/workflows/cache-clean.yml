@@ -1,0 +1,30 @@
+name: Cache Cleanup
+on:
+  schedule:
+    - cron: "15 3 * * *"   # runs daily at 03:15 UTC
+  workflow_dispatch:
+jobs:
+  clean:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Run cleanup
+        run: npm run clean:cache
+        env:
+          NODE_ENV: production
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          FIREBASE_CLIENT_EMAIL: ${{ secrets.FIREBASE_CLIENT_EMAIL }}
+          FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}

@@ -1,12 +1,16 @@
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { BookOpen, Bot, TrendingUp, Star, Coins, Flame, Award, ArrowRight, RotateCcw } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import useStore from '../state/store';
 import { getLesson } from '../data/api';
+import { pickNextLesson } from '../lib/adaptiveSelector';
+import NextBestLessonCard from '../components/NextBestLessonCard';
+import { lessons } from '../data/seed';
 
 export default function Dashboard() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const isPitchMode = searchParams.get('pitch') === '1';
   const [animationStep, setAnimationStep] = useState(0);
   const { user, lessonProgress, badges, getLeaderboard, resetDemo } = useStore();
@@ -20,6 +24,38 @@ export default function Dashboard() {
       return () => clearInterval(interval);
     }
   }, [isPitchMode]);
+
+  // Adaptive lesson selection
+  const getLessonsWithDifficulty = () => {
+    return lessons.map((l, i) => ({
+      id: l.id,
+      title: l.title,
+      difficulty: 1300 + i * 50, // Assign difficulty based on order
+    }));
+  };
+
+  const getUserRatings = () => {
+    const ratings = {};
+    Object.entries(lessonProgress).forEach(([id, progress]) => {
+      // Base rating 1500, adjust by crown level
+      ratings[id] = 1500 + (progress.crownLevel * 100);
+    });
+    return ratings;
+  };
+
+  const adaptiveLessons = getLessonsWithDifficulty();
+  const userRatings = getUserRatings();
+  const { chosen, candidates } = pickNextLesson({ 
+    lessons: adaptiveLessons, 
+    userRatings 
+  });
+
+  console.log('Adaptive Recommendation:', { 
+    chosenId: chosen.id, 
+    chosenTitle: chosen.title,
+    chosenDifficulty: chosen.difficulty,
+    chosenRating: chosen.rating
+  });
 
   // Streak heatmap (last 7 days)
   const getStreakDays = () => {
@@ -321,6 +357,19 @@ export default function Dashboard() {
           <p className="text-sm text-gray-600">See your ranking</p>
         </Link>
       </div>
+
+      {/* Adaptive Lesson Recommendation */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.8 }}
+      >
+        <NextBestLessonCard 
+          candidates={candidates}
+          selectedId={chosen.id}
+          onGo={(id) => navigate(`/lesson/${id}`)}
+        />
+      </motion.div>
     </div>
     </div>
   );

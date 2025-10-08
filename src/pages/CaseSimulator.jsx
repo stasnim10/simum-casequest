@@ -3,6 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, ChevronRight, CheckCircle, XCircle, Award } from 'lucide-react';
 import useStore from '../state/store';
+import { useFeedbackEnv } from '../hooks/useFeedbackEnv';
+import { useCaseFeedback } from '../hooks/useCaseFeedback';
+import FeedbackPanel from '../components/FeedbackPanel';
+import { track } from '../lib/analytics';
 
 const frameworks = [
   {
@@ -25,6 +29,9 @@ const frameworks = [
 export default function CaseSimulator() {
   const navigate = useNavigate();
   const { user, setXP, setCoins } = useStore();
+  const { base, secret } = useFeedbackEnv();
+  const { loading: feedbackLoading, data: feedbackData, error: feedbackError, requestFeedback, reset: resetFeedback } = useCaseFeedback(base, secret);
+  const [showFeedback, setShowFeedback] = useState(false);
   const [activePanel, setActivePanel] = useState(0);
   const [responses, setResponses] = useState({
     clarifyingQuestion: '',
@@ -37,6 +44,12 @@ export default function CaseSimulator() {
   });
   const [showResults, setShowResults] = useState(false);
   const [scores, setScores] = useState(null);
+  const [caseStartTime] = useState(Date.now());
+
+  // Track case start
+  useEffect(() => {
+    track('sim_case_started', { caseId: 'gamebox-profitability' });
+  }, []);
 
   // Load saved responses
   useEffect(() => {
@@ -111,13 +124,43 @@ export default function CaseSimulator() {
     setScores(calculatedScores);
     setShowResults(true);
 
+    // Track case completion
+    const durationSec = Math.floor((Date.now() - caseStartTime) / 1000);
+    track('sim_case_completed', { 
+      caseId: 'gamebox-profitability', 
+      durationSec,
+      score: calculatedScores.percentage 
+    });
+
     // Award XP and coins
     const xpGained = 50;
     setXP(user.xp + xpGained);
     setCoins(user.coins + 25);
+    track('xp_gained', { amount: xpGained, total: user.xp + xpGained });
 
     // Clear saved progress
     localStorage.removeItem('case-progress');
+  };
+
+  const handleGetFeedback = async () => {
+    try {
+      const userId = user?.id ?? 'local-demo';
+      const caseId = 'gamebox-profitability';
+      
+      const steps = [
+        { name: 'clarifying', content: responses.clarifyingQuestion },
+        { name: 'hypothesis', content: responses.hypothesis },
+        { name: 'structure', content: responses.framework || responses.customStructure },
+        { name: 'quant', content: `Profit: ${responses.profit}M, Margin: ${responses.margin}%` },
+        { name: 'recommendation', content: responses.recommendation }
+      ];
+      
+      const result = await requestFeedback(userId, caseId, steps);
+      track('ai_feedback_received', { caseId, cached: result?.cached ?? false });
+      setShowFeedback(true);
+    } catch (e) {
+      setShowFeedback(true);
+    }
   };
 
   const progress = ((activePanel + 1) / 5) * 100;
@@ -382,8 +425,27 @@ export default function CaseSimulator() {
           >
             Submit Case
           </button>
+          <button
+            onClick={handleGetFeedback}
+            disabled={!canContinue(4)}
+            className="w-full mt-3 px-4 py-2 rounded-lg border border-blue-600 text-blue-600 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Get AI Feedback
+          </button>
         </div>
       </Panel>
+
+      {/* AI Feedback Panel */}
+      {showFeedback && (
+        <div className="mt-4">
+          <FeedbackPanel 
+            data={feedbackData} 
+            error={feedbackError} 
+            loading={feedbackLoading} 
+            onClose={() => { setShowFeedback(false); resetFeedback(); }} 
+          />
+        </div>
+      )}
 
       {/* Results Modal */}
       <AnimatePresence>

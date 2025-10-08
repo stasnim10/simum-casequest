@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CheckCircle, XCircle, Crown } from 'lucide-react';
 import { getLesson } from '../data/api';
 import useStore from '../state/store';
+import { track } from '../lib/analytics';
 
 export default function LessonPlayer() {
   const { id } = useParams();
@@ -19,6 +20,7 @@ export default function LessonPlayer() {
     if (lessonData) {
       setLesson(lessonData);
       startLesson(id);
+      track('lesson_started', { lessonId: id, title: lessonData.title });
     }
   }, [id, startLesson]);
 
@@ -58,6 +60,12 @@ export default function LessonPlayer() {
     });
 
     const completionData = completeLesson(id, { correct, total: lesson.quiz.length });
+    track('lesson_completed', { 
+      lessonId: id, 
+      score: correct, 
+      total: lesson.quiz.length,
+      crowns: completionData.crownLevel 
+    });
     setResults({ gradedResults, correct, total: lesson.quiz.length, ...completionData });
     setStage('results');
   };

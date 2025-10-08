@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Feedback Test</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 p-8">
+  <div class="max-w-2xl mx-auto">
+    <h1 class="text-3xl font-bold mb-6">AI Feedback API Test</h1>
+    
+    <button 
+      id="testBtn" 
+      class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 mb-4"
+    >
+      Get AI Feedback
+    </button>
+    
+    <button 
+      id="testCacheBtn" 
+      class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 mb-4 ml-2"
+    >
+      Test Cache (Same Request)
+    </button>
+    
+    <div id="loading" class="hidden text-gray-600 mb-4">Loading...</div>
+    <div id="error" class="hidden text-red-600 mb-4"></div>
+    
+    <div id="result" class="bg-white rounded-lg shadow-lg p-6 hidden">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-semibold">AI Coach Feedback</h2>
+        <span id="cachedBadge" class="hidden text-xs bg-gray-200 px-2 py-1 rounded">Cached</span>
+      </div>
+      
+      <div id="scorecard" class="mb-4"></div>
+      <div id="strengths" class="mb-4"></div>
+      <div id="gaps" class="mb-4"></div>
+      <div id="actionItems" class="mb-4"></div>
+      
+      <pre id="rawJson" class="bg-gray-100 p-4 rounded text-xs overflow-auto"></pre>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = 'http://localhost:8787';
+    
+    const samplePayload = {
+      userId: 'test-user',
+      caseId: 'gamebox-profitability',
+      steps: [
+        { name: 'clarifying', content: 'What is the time period for analysis?' },
+        { name: 'hypothesis', content: 'Revenue declined due to increased market competition and pricing pressure' },
+        { name: 'structure', content: 'Using profit tree framework: Revenue (Price x Volume) and Costs (Fixed + Variable)' },
+        { name: 'quant', content: 'New Profit: $30M (Revenue $150M - Costs $120M), New Margin: 20%' },
+        { name: 'recommendation', content: 'Recommend focusing on customer retention, targeted pricing strategy, and operational cost reduction to improve margins' }
+      ],
+      rubricVersion: 'v1'
+    };
+    
+    async function getFeedback() {
+      const loading = document.getElementById('loading');
+      const error = document.getElementById('error');
+      const result = document.getElementById('result');
+      
+      loading.classList.remove('hidden');
+      error.classList.add('hidden');
+      result.classList.add('hidden');
+      
+      try {
+        const res = await fetch(`${API_BASE}/api/feedback`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(samplePayload)
+        });
+        
+        if (!res.ok) throw new Error(`API error: ${res.status}`);
+        
+        const data = await res.json();
+        displayResult(data);
+      } catch (e) {
+        error.textContent = `Error: ${e.message}`;
+        error.classList.remove('hidden');
+      } finally {
+        loading.classList.add('hidden');
+      }
+    }
+    
+    function displayResult(data) {
+      const result = document.getElementById('result');
+      const cachedBadge = document.getElementById('cachedBadge');
+      const scorecard = document.getElementById('scorecard');
+      const strengths = document.getElementById('strengths');
+      const gaps = document.getElementById('gaps');
+      const actionItems = document.getElementById('actionItems');
+      const rawJson = document.getElementById('rawJson');
+      
+      if (data.cached) {
+        cachedBadge.classList.remove('hidden');
+      } else {
+        cachedBadge.classList.add('hidden');
+      }
+      
+      if (data.scorecard) {
+        scorecard.innerHTML = `
+          <h3 class="font-semibold mb-2">Scorecard</h3>
+          <div class="space-y-2">
+            ${Object.entries(data.scorecard).map(([key, val]) => `
+              <div class="flex justify-between text-sm">
+                <span class="capitalize">${key}</span>
+                <span class="font-semibold">${val}%</span>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+      
+      if (data.strengths?.length) {
+        strengths.innerHTML = `
+          <h3 class="font-semibold mb-2">Strengths</h3>
+          <ul class="list-disc pl-5 text-sm space-y-1">
+            ${data.strengths.map(s => `<li>${s}</li>`).join('')}
+          </ul>
+        `;
+      }
+      
+      if (data.gaps?.length) {
+        gaps.innerHTML = `
+          <h3 class="font-semibold mb-2">Gaps</h3>
+          <ul class="list-disc pl-5 text-sm space-y-1">
+            ${data.gaps.map(g => `<li>${g}</li>`).join('')}
+          </ul>
+        `;
+      }
+      
+      if (data.actionItems?.length) {
+        actionItems.innerHTML = `
+          <h3 class="font-semibold mb-2">Action Items</h3>
+          <ul class="list-disc pl-5 text-sm space-y-1">
+            ${data.actionItems.map(a => `<li>${a}</li>`).join('')}
+          </ul>
+        `;
+      }
+      
+      rawJson.textContent = JSON.stringify(data, null, 2);
+      result.classList.remove('hidden');
+    }
+    
+    document.getElementById('testBtn').addEventListener('click', getFeedback);
+    document.getElementById('testCacheBtn').addEventListener('click', getFeedback);
+  </script>
+</body>
+</html>
