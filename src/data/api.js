@@ -1,12 +1,17 @@
-export const fetchLessons = async () => {
-  // Placeholder for API calls
-  return [];
+import { modules, lessons } from './seed';
+
+export const getModuleList = () => {
+  return modules;
 };
 
-export const fetchCases = async () => {
-  return [];
+export const getModule = (id) => {
+  return modules.find(m => m.id === id);
 };
 
-export const submitAnswer = async (lessonId, answer) => {
-  return { correct: true, xp: 10 };
+export const getLesson = (id) => {
+  return lessons.find(l => l.id === id);
+};
+
+export const getLessonsByModule = (moduleId) => {
+  return lessons.filter(l => l.moduleId === moduleId);
 };
