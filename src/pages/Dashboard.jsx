@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Star, Flame, Trophy, Target, RotateCcw, ArrowRight, TrendingUp, TrendingDown } from 'lucide-react';
+import { Star, Flame, Trophy, Target, RotateCcw, ArrowRight, TrendingUp, TrendingDown, Settings, Shield } from 'lucide-react';
 import useStore from '../state/store';
 import { getModuleList, getLessonsByModule } from '../data/api';
+import { getDueItems } from '../services/spacedRepetition';
 
 export default function Dashboard() {
-  const { user, lessonProgress, resetDemo } = useStore();
+  const { user, lessonProgress, reviewItems, resetDemo, setDailyGoal } = useStore();
   const [highlightIndex, setHighlightIndex] = useState(-1);
+  const [showGoalModal, setShowGoalModal] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -26,7 +28,22 @@ export default function Dashboard() {
       }, 1000);
       return () => clearInterval(interval);
     }
-  }, []);
+
+    // Check for daily goal reminder at 8 PM
+    const checkReminder = () => {
+      const now = new Date();
+      const hour = now.getHours();
+      const today = now.toISOString().split('T')[0];
+      
+      if (hour === 20 && user.lastActiveDate === today && user.dailyXP < user.dailyGoal) {
+        // Show toast reminder (simplified - would use a toast library in production)
+        console.log('Reminder: Complete your daily goal!');
+      }
+    };
+    
+    const reminderInterval = setInterval(checkReminder, 60000); // Check every minute
+    return () => clearInterval(reminderInterval);
+  }, [user]);
 
   // Get streak heat map (last 7 days)
   const getStreakHeatMap = () => {
@@ -39,7 +56,7 @@ export default function Dashboard() {
       days.push({
         date: dateStr,
         day: date.toLocaleDateString('en-US', { weekday: 'short' }),
-        active: false // Would check streakHistory in real implementation
+        active: i <= user.streak - 1
       });
     }
     return days;
@@ -92,6 +109,8 @@ export default function Dashboard() {
   const streakDays = getStreakHeatMap();
   const nextLesson = getNextLesson();
   const performance = getPerformance();
+  const dueReviews = getDueItems(reviewItems);
+  const dailyProgress = Math.min((user.dailyXP / user.dailyGoal) * 100, 100);
 
   return (
     <div className="max-w-6xl mx-auto p-4">
@@ -109,14 +128,52 @@ export default function Dashboard() {
         </button>
       </div>
 
-      {/* Streak Heat Map */}
+      {/* Daily Goal Progress */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white rounded-xl p-6 shadow-sm mb-6"
+      >
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h3 className="text-lg font-semibold">Daily Goal</h3>
+            <p className="text-sm text-gray-600">
+              {user.dailyXP} / {user.dailyGoal} XP
+            </p>
+          </div>
+          <button
+            onClick={() => setShowGoalModal(true)}
+            className="text-indigo-600 hover:text-indigo-700"
+          >
+            <Settings className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${dailyProgress}%` }}
+            transition={{ duration: 0.5 }}
+            className="bg-gradient-to-r from-indigo-500 to-purple-500 h-full rounded-full"
+          />
+        </div>
+      </motion.div>
+
+      {/* Streak with Freeze */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="bg-white rounded-xl p-6 shadow-sm mb-6"
       >
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">Your Streak</h3>
+          <div className="flex items-center gap-3">
+            <h3 className="text-lg font-semibold">Your Streak</h3>
+            {user.streakFreezeAvailable && (
+              <div className="flex items-center gap-1 bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-semibold">
+                <Shield className="w-3 h-3" />
+                Freeze Available
+              </div>
+            )}
+          </div>
           <div className="flex items-center gap-2 text-orange-500">
             <Flame className="w-5 h-5" fill="currentColor" />
             <span className="font-bold">{user.streak} days</span>
@@ -126,7 +183,7 @@ export default function Dashboard() {
           {streakDays.map((day, i) => (
             <div key={i} className="flex-1 text-center">
               <div className={`h-12 rounded-lg mb-2 ${
-                i < user.streak ? 'bg-orange-500' : 'bg-gray-200'
+                day.active ? 'bg-orange-500' : 'bg-gray-200'
               }`} />
               <p className="text-xs text-gray-600">{day.day}</p>
             </div>
@@ -229,29 +286,67 @@ export default function Dashboard() {
         </motion.div>
       )}
 
-      {/* Review Banner (placeholder) */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.8 }}
-        className="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-4"
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <RotateCcw className="w-6 h-6 text-blue-600" />
-            <div>
-              <h4 className="font-semibold text-blue-900">Review Time!</h4>
-              <p className="text-sm text-blue-700">3 lessons ready for review</p>
+      {/* Review Banner */}
+      {dueReviews.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8 }}
+          className="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-4"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <RotateCcw className="w-6 h-6 text-blue-600" />
+              <div>
+                <h4 className="font-semibold text-blue-900">Review Time!</h4>
+                <p className="text-sm text-blue-700">{dueReviews.length} items ready for review</p>
+              </div>
             </div>
+            <button
+              onClick={() => navigate('/review')}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700"
+            >
+              Start Review
+            </button>
           </div>
-          <button
-            onClick={() => navigate('/review')}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700"
+        </motion.div>
+      )}
+
+      {/* Daily Goal Modal */}
+      {showGoalModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowGoalModal(false)}>
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-2xl p-6 max-w-sm w-full"
           >
-            Start Review
-          </button>
+            <h3 className="text-xl font-bold mb-4">Set Daily Goal</h3>
+            <p className="text-sm text-gray-600 mb-4">Choose your daily XP target</p>
+            <div className="space-y-2">
+              {[10, 20, 30, 50].map((goal) => (
+                <button
+                  key={goal}
+                  onClick={() => {
+                    setDailyGoal(goal);
+                    setShowGoalModal(false);
+                  }}
+                  className={`w-full p-3 rounded-lg border-2 transition ${
+                    user.dailyGoal === goal
+                      ? 'border-indigo-500 bg-indigo-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <span className="font-semibold">{goal} XP</span>
+                  <span className="text-sm text-gray-600 ml-2">
+                    ({Math.ceil(goal / 30)} lessons)
+                  </span>
+                </button>
+              ))}
+            </div>
+          </motion.div>
         </div>
-      </motion.div>
+      )}
     </div>
   );
 }

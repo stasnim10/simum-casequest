@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { calculateNextReview } from '../services/spacedRepetition';
 
 const defaultUser = {
   id: 'demo',
@@ -7,7 +8,11 @@ const defaultUser = {
   xp: 0,
   streak: 0,
   coins: 0,
-  badges: []
+  badges: [],
+  dailyGoal: 20,
+  dailyXP: 0,
+  lastActiveDate: null,
+  streakFreezeAvailable: true
 };
 
 const useStore = create(
@@ -16,10 +21,27 @@ const useStore = create(
       user: defaultUser,
       lessonProgress: {},
       streakHistory: {},
+      reviewItems: {}, // { questionId: { lessonId, questionData, nextReview, intervalIndex, lastQuality } }
 
-      setXP: (delta) => set((state) => ({
-        user: { ...state.user, xp: state.user.xp + delta }
+      setUser: (user) => set({ user }),
+      
+      setDailyGoal: (goal) => set((state) => ({
+        user: { ...state.user, dailyGoal: goal }
       })),
+
+      addXP: (amount) => {
+        const today = new Date().toISOString().split('T')[0];
+        set((state) => ({
+          user: { 
+            ...state.user, 
+            xp: state.user.xp + amount,
+            dailyXP: state.user.lastActiveDate === today 
+              ? state.user.dailyXP + amount 
+              : amount,
+            lastActiveDate: today
+          }
+        }));
+      },
 
       incrementStreakIfFirstCompletionToday: () => {
         const today = new Date().toISOString().split('T')[0];
@@ -29,10 +51,26 @@ const useStore = create(
           const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
           const hadYesterday = streakHistory[yesterday];
           
+          let newStreak = user.streak;
+          let freezeUsed = false;
+          
+          if (hadYesterday) {
+            // Continue streak
+            newStreak = user.streak + 1;
+          } else if (user.streak > 0 && user.streakFreezeAvailable) {
+            // Use freeze to maintain streak
+            newStreak = user.streak;
+            freezeUsed = true;
+          } else {
+            // Start new streak
+            newStreak = 1;
+          }
+          
           set({
             user: { 
               ...user, 
-              streak: hadYesterday ? user.streak + 1 : 1 
+              streak: newStreak,
+              streakFreezeAvailable: freezeUsed ? false : user.streakFreezeAvailable
             },
             streakHistory: { ...streakHistory, [today]: true }
           });
@@ -74,8 +112,17 @@ const useStore = create(
         // Determine status
         const newStatus = newCrownLevel >= 3 ? 'mastered' : 'in_progress';
         
+        const today = new Date().toISOString().split('T')[0];
+        
         set({
-          user: { ...user, xp: user.xp + totalXP },
+          user: { 
+            ...user, 
+            xp: user.xp + totalXP,
+            dailyXP: user.lastActiveDate === today 
+              ? user.dailyXP + totalXP 
+              : totalXP,
+            lastActiveDate: today
+          },
           lessonProgress: {
             ...lessonProgress,
             [id]: {
@@ -89,12 +136,54 @@ const useStore = create(
         get().incrementStreakIfFirstCompletionToday();
       },
 
+      addReviewItem: (questionId, lessonId, questionData) => {
+        const { nextReviewDate, intervalIndex } = calculateNextReview(3, 0);
+        
+        set((state) => ({
+          reviewItems: {
+            ...state.reviewItems,
+            [questionId]: {
+              lessonId,
+              questionData,
+              nextReview: nextReviewDate,
+              intervalIndex,
+              lastQuality: 3
+            }
+          }
+        }));
+      },
+
+      updateReviewItem: (questionId, quality) => {
+        const { reviewItems } = get();
+        const item = reviewItems[questionId];
+        
+        if (!item) return;
+        
+        const { nextReviewDate, intervalIndex } = calculateNextReview(
+          quality, 
+          item.intervalIndex
+        );
+        
+        set({
+          reviewItems: {
+            ...reviewItems,
+            [questionId]: {
+              ...item,
+              nextReview: nextReviewDate,
+              intervalIndex,
+              lastQuality: quality
+            }
+          }
+        });
+      },
+
       resetDemo: () => {
         localStorage.removeItem('casequest-storage');
         set({
           user: defaultUser,
           lessonProgress: {},
-          streakHistory: {}
+          streakHistory: {},
+          reviewItems: {}
         });
       }
     }),
@@ -103,7 +192,8 @@ const useStore = create(
       partialize: (state) => ({
         user: state.user,
         lessonProgress: state.lessonProgress,
-        streakHistory: state.streakHistory
+        streakHistory: state.streakHistory,
+        reviewItems: state.reviewItems
       })
     }
   )
