@@ -10,7 +10,11 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist"
+    "deploy": "gh-pages -d dist",
+    "clean": "rm -rf dist node_modules && npm install",
+    "rebuild": "npm run clean && npm run build",
+    "redeploy": "npm run rebuild && npm run deploy",
+    "restore-domain": "git checkout gh-pages && echo 'www.casequestapp.com' > CNAME && git add CNAME && git commit -m 'restore domain' || echo 'CNAME already ok' && git push && git checkout -"
   },
   "dependencies": {
     "framer-motion": "^12.23.22",
