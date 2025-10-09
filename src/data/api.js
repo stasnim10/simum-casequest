@@ -1,4 +1,5 @@
 import { modules, lessons } from './seed.js';
+import { cases } from './cases.js';
 
 export const getModuleList = () => {
   return modules;
@@ -14,4 +15,12 @@ export const getLesson = (id) => {
 
 export const getLessonsByModule = (moduleId) => {
   return lessons.filter(l => l.moduleId === moduleId);
+};
+
+export const getCaseById = (id) => {
+  return cases.find(c => c.id === id);
+};
+
+export const getAllCases = () => {
+  return cases;
 };

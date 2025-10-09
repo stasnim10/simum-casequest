@@ -1,524 +1,266 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ChevronUp, CheckCircle, Star, Trophy } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react';
 import useStore from '../state/store';
 import useCaseFeedback from '../hooks/useCaseFeedback';
 import FeedbackPanel from '../components/FeedbackPanel';
 import { track } from '../lib/analytics';
+import { getAllCases } from '../data/api';
 
-const frameworks = [
-  { id: 'profitability', name: 'Profitability', desc: 'Revenue - Costs = Profit' },
-  { id: 'market-entry', name: 'Market Entry', desc: 'Market, Competition, Company' },
-  { id: '4p', name: '4Ps', desc: 'Product, Price, Place, Promotion' },
-  { id: 'custom', name: 'Custom', desc: 'Build your own framework' }
+const steps = [
+  { id: 0, title: 'Clarifying Questions', desc: 'Ask questions to understand the problem' },
+  { id: 1, title: 'Hypothesis', desc: 'State your initial hypothesis' },
+  { id: 2, title: 'Framework', desc: 'Choose your analysis structure' },
+  { id: 3, title: 'Quantitative Analysis', desc: 'Analyze the numbers' },
+  { id: 4, title: 'Recommendation', desc: 'Provide your final recommendation' }
 ];
 
 export default function CaseSimulator() {
-  const { addXP, addBadge, user } = useStore();
+  const { addXP, user, setUser } = useStore();
   const { loading, data, error, requestFeedback } = useCaseFeedback();
-  const [expanded, setExpanded] = useState({ 1: true });
-  const [caseStartTime] = useState(Date.now());
-  const [responses, setResponses] = useState({
+  const [activeStep, setActiveStep] = useState(0);
+  const [currentCase] = useState(getAllCases()[0]);
+  const [answers, setAnswers] = useState({
     clarifying: ['', '', ''],
-    customQuestion: '',
     hypothesis: '',
-    framework: '',
-    customFramework: '',
-    profit: '',
-    margin: '',
+    structure: '',
+    quant: {},
     recommendation: ''
   });
-  const [showResults, setShowResults] = useState(false);
-  const [scores, setScores] = useState(null);
+  const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
-    track('sim_case_started', { caseId: 'gamebox-profitability' });
-  }, []);
+    track('sim_case_started', { caseId: currentCase.id });
+  }, [currentCase.id]);
 
-  const togglePanel = (panel) => {
-    setExpanded({ ...expanded, [panel]: !expanded[panel] });
-  };
-
-  const updateResponse = (field, value) => {
-    setResponses({ ...responses, [field]: value });
+  const updateAnswer = (field, value) => {
+    setAnswers({ ...answers, [field]: value });
   };
 
   const updateClarifying = (index, value) => {
-    const newClarifying = [...responses.clarifying];
+    const newClarifying = [...answers.clarifying];
     newClarifying[index] = value;
-    setResponses({ ...responses, clarifying: newClarifying });
+    updateAnswer('clarifying', newClarifying);
   };
 
-  const scoreCase = () => {
-    // Communication: based on clarifying questions
-    const clarifyingFilled = responses.clarifying.filter(q => q.trim()).length + 
-                             (responses.customQuestion.trim() ? 1 : 0);
-    const communicationScore = Math.min(5, Math.ceil(clarifyingFilled * 1.25));
-
-    // Structure: based on hypothesis and framework
-    const hasHypothesis = responses.hypothesis.trim().length > 20;
-    const hasFramework = responses.framework || responses.customFramework.trim().length > 20;
-    const structureScore = (hasHypothesis ? 2.5 : 0) + (hasFramework ? 2.5 : 0);
-
-    // Quant: validate profit and margin
-    // Correct: Revenue $200M -> $150M, Cost $120M
-    // Profit = 150 - 120 = 30M
-    // Margin = 30/150 = 20%
-    const profitInput = parseFloat(responses.profit);
-    const marginInput = parseFloat(responses.margin);
-    const profitCorrect = !isNaN(profitInput) && Math.abs(profitInput - 30) <= 3; // ±10%
-    const marginCorrect = !isNaN(marginInput) && Math.abs(marginInput - 20) <= 2; // ±10%
-    const quantScore = (profitCorrect ? 2.5 : 0) + (marginCorrect ? 2.5 : 0);
-
-    // Recommendation: based on length and structure
-    const recLength = responses.recommendation.trim().length;
-    const hasBullets = responses.recommendation.includes('-') || responses.recommendation.includes('•');
-    const recommendationScore = recLength > 50 ? (hasBullets ? 5 : 3) : (recLength > 20 ? 2 : 0);
-
-    const total = communicationScore + structureScore + quantScore + recommendationScore;
-    const percentage = Math.round((total / 20) * 100);
-
-    const feedback = [];
-    if (communicationScore >= 4) feedback.push('Strong clarifying questions');
-    else if (communicationScore >= 2) feedback.push('Good start on clarifying');
-    else feedback.push('Ask more clarifying questions');
-
-    if (structureScore >= 4) feedback.push('Excellent structure and hypothesis');
-    else if (structureScore >= 2) feedback.push('Decent framework approach');
-    else feedback.push('Develop stronger structure');
-
-    if (quantScore >= 4) feedback.push('Strong quantitative skills');
-    else if (quantScore >= 2) feedback.push('Good attempt at calculations');
-    else feedback.push('Review profit and margin formulas');
-
-    if (recommendationScore >= 4) feedback.push('Clear, actionable recommendation');
-    else if (recommendationScore >= 2) feedback.push('Recommendation needs more detail');
-    else feedback.push('Provide structured recommendation');
-
-    return {
-      communication: communicationScore,
-      structure: structureScore,
-      quant: quantScore,
-      recommendation: recommendationScore,
-      total,
-      percentage,
-      feedback
-    };
+  const updateQuant = (key, value) => {
+    updateAnswer('quant', { ...answers.quant, [key]: value });
   };
 
-  const handleSubmit = () => {
-    const caseScores = scoreCase();
-    setScores(caseScores);
-    
-    const durationSec = Math.round((Date.now() - caseStartTime) / 1000);
-    track('sim_case_completed', { 
-      caseId: 'gamebox-profitability', 
-      durationSec, 
-      score: caseScores.percentage 
+  const handleNext = () => {
+    if (activeStep < steps.length - 1) {
+      setActiveStep(activeStep + 1);
+    }
+  };
+
+  const handleBack = () => {
+    if (activeStep > 0) {
+      setActiveStep(activeStep - 1);
+    }
+  };
+
+  const handleSubmit = async () => {
+    setSubmitted(true);
+    const result = await requestFeedback({
+      userId: user?.id || 'demo',
+      caseId: currentCase.id,
+      steps: answers
     });
     
-    // Award XP and badge
-    addXP(50);
-    if (!user.badges.includes('🎯')) {
-      addBadge('🎯');
+    if (result) {
+      track('ai_feedback_received', { caseId: currentCase.id, cached: !!result.cached });
+      const xpGain = result.scorecard?.overall ? parseInt(result.scorecard.overall) * 10 : 50;
+      addXP(xpGain);
     }
-    
-    setShowResults(true);
   };
 
-  const handleClose = () => {
-    // Clear responses
-    setResponses({
+  const handleReset = () => {
+    setActiveStep(0);
+    setAnswers({
       clarifying: ['', '', ''],
-      customQuestion: '',
       hypothesis: '',
-      framework: '',
-      customFramework: '',
-      profit: '',
-      margin: '',
+      structure: '',
+      quant: {},
       recommendation: ''
     });
-    setShowResults(false);
-    setScores(null);
-    setExpanded({ 1: true });
+    setSubmitted(false);
   };
-
-  const handleFeedback = async () => {
-    const result = await requestFeedback({
-      userId: user.id || 'demo',
-      caseId: 'gamebox-profitability',
-      steps: {
-        clarifying: responses.clarifying,
-        hypothesis: responses.hypothesis,
-        framework: responses.framework || responses.customFramework,
-        calculations: { profit: responses.profit, margin: responses.margin },
-        recommendation: responses.recommendation
-      }
-    });
-    if (result) {
-      track('ai_feedback_received', { 
-        caseId: 'gamebox-profitability', 
-        cached: !!result.cached 
-      });
-    }
-  };
-
-  const Panel = ({ number, title, children, isComplete }) => (
-    <div className="bg-white rounded-lg border-2 border-gray-200 overflow-hidden">
-      <button
-        onClick={() => togglePanel(number)}
-        className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition"
-      >
-        <div className="flex items-center gap-3">
-          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
-            isComplete ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-600'
-          }`}>
-            {isComplete ? <CheckCircle className="w-5 h-5" /> : number}
-          </div>
-          <h3 className="text-lg font-semibold">{title}</h3>
-        </div>
-        {expanded[number] ? <ChevronUp /> : <ChevronDown />}
-      </button>
-      
-      <AnimatePresence>
-        {expanded[number] && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="border-t border-gray-200"
-          >
-            <div className="p-4">
-              {children}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
 
   return (
-    <div className="max-w-4xl mx-auto p-4">
-      <div className="mb-6">
-        <h2 className="text-3xl font-bold mb-2">Case Simulator</h2>
-        <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
-          <p className="text-sm text-blue-900">
-            <strong>Case:</strong> A retail company's revenue dropped from $200M to $150M. 
-            Costs remain at $120M. What's happening and what should they do?
-          </p>
-        </div>
-      </div>
-
-      <div className="space-y-4 mb-6">
-        {/* Panel 1: Clarifying Questions */}
-        <Panel 
-          number={1} 
-          title="Clarifying Questions"
-          isComplete={responses.clarifying.some(q => q.trim()) || responses.customQuestion.trim()}
-        >
-          <p className="text-sm text-gray-600 mb-4">Ask questions to understand the problem better</p>
-          <div className="space-y-3">
-            <div>
-              <label className="block text-sm font-medium mb-1">Suggested questions (select or modify):</label>
-              <input
-                type="text"
-                value={responses.clarifying[0]}
-                onChange={(e) => updateClarifying(0, e.target.value)}
-                placeholder="What caused the revenue decline?"
-                className="w-full p-3 border rounded-lg"
-              />
-            </div>
-            <input
-              type="text"
-              value={responses.clarifying[1]}
-              onChange={(e) => updateClarifying(1, e.target.value)}
-              placeholder="Is this affecting all product lines?"
-              className="w-full p-3 border rounded-lg"
-            />
-            <input
-              type="text"
-              value={responses.clarifying[2]}
-              onChange={(e) => updateClarifying(2, e.target.value)}
-              placeholder="What's the competitive landscape?"
-              className="w-full p-3 border rounded-lg"
-            />
-            <input
-              type="text"
-              value={responses.customQuestion}
-              onChange={(e) => updateResponse('customQuestion', e.target.value)}
-              placeholder="Add your own question..."
-              className="w-full p-3 border rounded-lg border-indigo-300"
-            />
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 p-4">
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-6">
+          <h2 className="text-3xl font-bold mb-2">Case Simulator</h2>
+          <div className="bg-white rounded-2xl p-6 shadow-sm">
+            <h3 className="text-xl font-semibold mb-2">{currentCase.title}</h3>
+            <p className="text-gray-600">{currentCase.description}</p>
           </div>
-        </Panel>
+        </div>
 
-        {/* Panel 2: Hypothesis */}
-        <Panel 
-          number={2} 
-          title="Hypothesis"
-          isComplete={responses.hypothesis.trim().length > 20}
-        >
-          <p className="text-sm text-gray-600 mb-4">What's your initial hypothesis about the problem?</p>
-          <textarea
-            value={responses.hypothesis}
-            onChange={(e) => updateResponse('hypothesis', e.target.value)}
-            placeholder="Example: I hypothesize that the revenue decline is due to increased competition leading to lost market share..."
-            rows={4}
-            className="w-full p-3 border rounded-lg"
-          />
-        </Panel>
-
-        {/* Panel 3: Structure/Framework */}
-        <Panel 
-          number={3} 
-          title="Structure & Framework"
-          isComplete={responses.framework || responses.customFramework.trim().length > 20}
-        >
-          <p className="text-sm text-gray-600 mb-4">Choose a framework to structure your analysis</p>
-          <div className="grid grid-cols-2 gap-3 mb-4">
-            {frameworks.map((fw) => (
-              <button
-                key={fw.id}
-                onClick={() => updateResponse('framework', fw.id)}
-                className={`p-4 border-2 rounded-lg text-left transition ${
-                  responses.framework === fw.id
-                    ? 'border-indigo-500 bg-indigo-50'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-              >
-                <h4 className="font-semibold mb-1">{fw.name}</h4>
-                <p className="text-sm text-gray-600">{fw.desc}</p>
-              </button>
+        {/* Progress Bar */}
+        <div className="mb-6 bg-white rounded-2xl p-4 shadow-sm">
+          <div className="flex justify-between mb-2">
+            {steps.map((step, idx) => (
+              <div key={step.id} className="flex-1 text-center">
+                <div className={`w-8 h-8 mx-auto rounded-full flex items-center justify-center ${
+                  idx <= activeStep ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-500'
+                }`}>
+                  {idx < activeStep ? <CheckCircle className="w-5 h-5" /> : idx + 1}
+                </div>
+                <p className="text-xs mt-1 hidden md:block">{step.title}</p>
+              </div>
             ))}
           </div>
-          {responses.framework === 'custom' && (
-            <textarea
-              value={responses.customFramework}
-              onChange={(e) => updateResponse('customFramework', e.target.value)}
-              placeholder="Describe your custom framework..."
-              rows={3}
-              className="w-full p-3 border rounded-lg"
-            />
-          )}
-        </Panel>
+        </div>
 
-        {/* Panel 4: Quantitative Analysis */}
-        <Panel 
-          number={4} 
-          title="Quantitative Analysis"
-          isComplete={responses.profit && responses.margin}
-        >
-          <p className="text-sm text-gray-600 mb-4">
-            Calculate key metrics: Revenue dropped from $200M to $150M, Costs are $120M
-          </p>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">Current Profit (in $M):</label>
-              <input
-                type="number"
-                value={responses.profit}
-                onChange={(e) => updateResponse('profit', e.target.value)}
-                placeholder="Calculate: Revenue - Costs"
-                className="w-full p-3 border rounded-lg"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Current Profit Margin (%):</label>
-              <input
-                type="number"
-                value={responses.margin}
-                onChange={(e) => updateResponse('margin', e.target.value)}
-                placeholder="Calculate: (Profit / Revenue) × 100"
-                className="w-full p-3 border rounded-lg"
-              />
-            </div>
-          </div>
-        </Panel>
-
-        {/* Panel 5: Recommendation */}
-        <Panel 
-          number={5} 
-          title="Recommendation"
-          isComplete={responses.recommendation.trim().length > 50}
-        >
-          <p className="text-sm text-gray-600 mb-4">Provide a clear, actionable recommendation</p>
-          <div className="bg-gray-50 p-3 rounded mb-3 text-sm">
-            <p className="font-medium mb-1">Template:</p>
-            <p>- What should they do?</p>
-            <p>- Why this approach?</p>
-            <p>- Expected impact?</p>
-          </div>
-          <textarea
-            value={responses.recommendation}
-            onChange={(e) => updateResponse('recommendation', e.target.value)}
-            placeholder="Based on my analysis, I recommend..."
-            rows={6}
-            className="w-full p-3 border rounded-lg"
-          />
-        </Panel>
-      </div>
-
-      <button
-        onClick={handleSubmit}
-        className="w-full bg-indigo-600 text-white py-4 rounded-lg font-semibold text-lg hover:bg-indigo-700 transition"
-      >
-        Submit Case
-      </button>
-
-      {/* Results Modal */}
-      <AnimatePresence>
-        {showResults && scores && (
+        {/* Step Content */}
+        <AnimatePresence mode="wait">
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-            onClick={handleClose}
+            key={activeStep}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="bg-white rounded-2xl p-6 shadow-sm mb-6"
           >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
-            >
-              <div className="text-center mb-6">
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: 'spring', delay: 0.2 }}
-                  className="text-8xl mb-4"
-                >
-                  🎯
-                </motion.div>
-                <h2 className="text-3xl font-bold mb-2">Case Complete!</h2>
-                <div className="text-5xl font-bold text-indigo-600 mb-2">
-                  {scores.percentage}%
-                </div>
-                <p className="text-gray-600">Total Score: {scores.total}/20</p>
+            <h3 className="text-xl font-semibold mb-4">{steps[activeStep].title}</h3>
+            <p className="text-gray-600 mb-6">{steps[activeStep].desc}</p>
+
+            {/* Step 0: Clarifying Questions */}
+            {activeStep === 0 && (
+              <div className="space-y-4">
+                {currentCase.questions.map((q, idx) => (
+                  <div key={idx}>
+                    <label className="block text-sm font-medium mb-2">{q}</label>
+                    <textarea
+                      value={answers.clarifying[idx]}
+                      onChange={(e) => updateClarifying(idx, e.target.value)}
+                      className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      rows="2"
+                      placeholder="Your answer..."
+                    />
+                  </div>
+                ))}
               </div>
+            )}
 
-              {/* Score Breakdown */}
-              <div className="space-y-3 mb-6">
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <span className="font-medium">Communication</span>
-                  <div className="flex gap-1">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className={`w-5 h-5 ${
-                          i < scores.communication ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <span className="font-medium">Structure</span>
-                  <div className="flex gap-1">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className={`w-5 h-5 ${
-                          i < scores.structure ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <span className="font-medium">Quantitative</span>
-                  <div className="flex gap-1">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className={`w-5 h-5 ${
-                          i < scores.quant ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <span className="font-medium">Recommendation</span>
-                  <div className="flex gap-1">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className={`w-5 h-5 ${
-                          i < scores.recommendation ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                </div>
+            {/* Step 1: Hypothesis */}
+            {activeStep === 1 && (
+              <div>
+                <label className="block text-sm font-medium mb-2">Your Hypothesis</label>
+                <textarea
+                  value={answers.hypothesis}
+                  onChange={(e) => updateAnswer('hypothesis', e.target.value)}
+                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  rows="4"
+                  placeholder="State your initial hypothesis about the problem..."
+                />
               </div>
+            )}
 
-              {/* Feedback */}
-              <div className="bg-blue-50 rounded-lg p-4 mb-6">
-                <h3 className="font-semibold mb-2">Feedback:</h3>
-                <ul className="space-y-1">
-                  {scores.feedback.map((item, i) => (
-                    <li key={i} className="text-sm text-gray-700">• {item}</li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Rewards */}
-              <div className="space-y-3 mb-6">
-                <motion.div
-                  initial={{ x: -20, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  transition={{ delay: 0.3 }}
-                  className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg p-4 flex items-center gap-3"
-                >
-                  <div className="bg-yellow-500 rounded-full p-3">
-                    <Star className="w-6 h-6 text-white" fill="white" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">XP Gained</p>
-                    <p className="text-2xl font-bold">+50 XP</p>
-                  </div>
-                </motion.div>
-
-                {!user.badges.includes('🎯') && (
-                  <motion.div
-                    initial={{ x: -20, opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
-                    transition={{ delay: 0.4 }}
-                    className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4 flex items-center gap-3"
+            {/* Step 2: Framework */}
+            {activeStep === 2 && (
+              <div className="space-y-3">
+                {currentCase.structureOptions.map((option) => (
+                  <button
+                    key={option}
+                    onClick={() => updateAnswer('structure', option)}
+                    className={`w-full p-4 rounded-lg border-2 transition ${
+                      answers.structure === option
+                        ? 'border-indigo-600 bg-indigo-50'
+                        : 'border-gray-200 hover:border-indigo-300'
+                    }`}
                   >
-                    <div className="bg-purple-500 rounded-full p-3">
-                      <Trophy className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Badge Earned</p>
-                      <p className="text-2xl font-bold">🎯 First Case</p>
-                    </div>
-                  </motion.div>
-                )}
+                    <div className="font-semibold">{option}</div>
+                  </button>
+                ))}
               </div>
+            )}
 
+            {/* Step 3: Quantitative Analysis */}
+            {activeStep === 3 && (
+              <div className="space-y-4">
+                {Object.keys(currentCase.metrics).map((key) => (
+                  <div key={key}>
+                    <label className="block text-sm font-medium mb-2 capitalize">{key}</label>
+                    <input
+                      type="number"
+                      value={answers.quant[key] || ''}
+                      onChange={(e) => updateQuant(key, e.target.value)}
+                      className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      placeholder={`Enter ${key}...`}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Step 4: Recommendation */}
+            {activeStep === 4 && (
+              <div>
+                <label className="block text-sm font-medium mb-2">Final Recommendation</label>
+                <textarea
+                  value={answers.recommendation}
+                  onChange={(e) => updateAnswer('recommendation', e.target.value)}
+                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  rows="6"
+                  placeholder="Provide your structured recommendation with action items..."
+                />
+              </div>
+            )}
+          </motion.div>
+        </AnimatePresence>
+
+        {/* Navigation */}
+        {!submitted && (
+          <div className="flex justify-between mb-6">
+            <button
+              onClick={handleBack}
+              disabled={activeStep === 0}
+              className="flex items-center gap-2 px-6 py-3 rounded-lg border disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back
+            </button>
+            {activeStep < steps.length - 1 ? (
               <button
-                onClick={handleFeedback}
+                onClick={handleNext}
+                className="flex items-center gap-2 px-6 py-3 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700"
+              >
+                Next
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            ) : (
+              <button
+                onClick={handleSubmit}
                 disabled={loading}
-                className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 mb-3"
+                className="px-6 py-3 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
               >
                 {loading ? 'Analyzing...' : 'Get AI Feedback'}
               </button>
-              {error && <p className="text-red-600 text-sm mb-3">{error}</p>}
-              <FeedbackPanel feedback={data} />
-
-              <button
-                onClick={handleClose}
-                className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700"
-              >
-                Start New Case
-              </button>
-            </motion.div>
-          </motion.div>
+            )}
+          </div>
         )}
-      </AnimatePresence>
+
+        {/* Error Display */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <p className="text-red-600">{error}</p>
+          </div>
+        )}
+
+        {/* Feedback Panel */}
+        {data && (
+          <div className="mb-6">
+            <FeedbackPanel feedback={data} />
+            <button
+              onClick={handleReset}
+              className="mt-4 w-full px-6 py-3 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700"
+            >
+              Try Another Case
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
