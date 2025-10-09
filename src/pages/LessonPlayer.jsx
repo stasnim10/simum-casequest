@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, CheckCircle, XCircle, Star, Crown, Flame } from 'lucide-react';
 import useStore from '../state/store';
 import { getLesson } from '../data/api';
+import { track } from '../lib/analytics';
 
 export default function LessonPlayer() {
   const { id } = useParams();
@@ -23,6 +24,7 @@ export default function LessonPlayer() {
   useEffect(() => {
     if (lesson) {
       startLesson(id);
+      track('lesson_started', { lessonId: id, title: lesson.title });
     }
   }, [id, lesson, startLesson]);
 
@@ -79,6 +81,13 @@ export default function LessonPlayer() {
       const newCrownLevel = isPerfect 
         ? Math.min(prevCrownLevel + 1, 5) 
         : prevCrownLevel;
+      
+      track('lesson_completed', { 
+        lessonId: id, 
+        score: correct, 
+        total,
+        crowns: newCrownLevel 
+      });
       
       setResults({
         correct,

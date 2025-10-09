@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Star, Flame, Trophy, Target, RotateCcw, ArrowRight, TrendingUp, TrendingDown, Settings, Shield } from 'lucide-react';
 import useStore from '../state/store';
 import { getModuleList, getLessonsByModule } from '../data/api';
 import { getDueItems } from '../services/spacedRepetition';
+import NextBestLessonCard from '../components/NextBestLessonCard';
+import { pickNextLesson } from '../lib/adaptiveSelector';
 
 export default function Dashboard() {
   const { user, lessonProgress, reviewItems, resetDemo, setDailyGoal } = useStore();
@@ -97,6 +99,25 @@ export default function Dashboard() {
     return { strengths, weaknesses };
   };
 
+  const lessons = useMemo(() => {
+    const modules = getModuleList();
+    return modules.flatMap(m => getLessonsByModule(m.id));
+  }, []);
+
+  const userRatings = useMemo(() => {
+    try {
+      const raw = localStorage.getItem('casequest-storage');
+      if (!raw) return {};
+      const parsed = JSON.parse(raw);
+      return parsed?.state?.userRatings || {};
+    } catch { return {}; }
+  }, []);
+
+  const { chosen, candidates } = useMemo(
+    () => pickNextLesson({ lessons, userRatings }),
+    [lessons, userRatings]
+  );
+
   const stats = [
     { icon: Star, label: 'Total XP', value: user.xp, color: 'text-yellow-500', bg: 'bg-yellow-100' },
     { icon: Flame, label: 'Streak', value: `${user.streak} days`, color: 'text-orange-500', bg: 'bg-orange-100' },
@@ -159,6 +180,20 @@ export default function Dashboard() {
               className="bg-gradient-to-r from-indigo-500 to-purple-500 h-full rounded-full"
             />
           </div>
+        </motion.div>
+
+        {/* Next Best Lesson */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="mb-6"
+        >
+          <NextBestLessonCard
+            candidates={candidates}
+            selectedId={chosen?.id}
+            onGo={(id) => navigate(`/lesson/${id}`)}
+          />
         </motion.div>
 
         {/* Stats Grid */}

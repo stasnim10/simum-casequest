@@ -1,7 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, ChevronUp, CheckCircle, Star, Trophy } from 'lucide-react';
 import useStore from '../state/store';
+import useCaseFeedback from '../hooks/useCaseFeedback';
+import FeedbackPanel from '../components/FeedbackPanel';
+import { track } from '../lib/analytics';
 
 const frameworks = [
   { id: 'profitability', name: 'Profitability', desc: 'Revenue - Costs = Profit' },
@@ -12,7 +15,9 @@ const frameworks = [
 
 export default function CaseSimulator() {
   const { addXP, addBadge, user } = useStore();
+  const { loading, data, error, requestFeedback } = useCaseFeedback();
   const [expanded, setExpanded] = useState({ 1: true });
+  const [caseStartTime] = useState(Date.now());
   const [responses, setResponses] = useState({
     clarifying: ['', '', ''],
     customQuestion: '',
@@ -25,6 +30,10 @@ export default function CaseSimulator() {
   });
   const [showResults, setShowResults] = useState(false);
   const [scores, setScores] = useState(null);
+
+  useEffect(() => {
+    track('sim_case_started', { caseId: 'gamebox-profitability' });
+  }, []);
 
   const togglePanel = (panel) => {
     setExpanded({ ...expanded, [panel]: !expanded[panel] });
@@ -101,6 +110,13 @@ export default function CaseSimulator() {
     const caseScores = scoreCase();
     setScores(caseScores);
     
+    const durationSec = Math.round((Date.now() - caseStartTime) / 1000);
+    track('sim_case_completed', { 
+      caseId: 'gamebox-profitability', 
+      durationSec, 
+      score: caseScores.percentage 
+    });
+    
     // Award XP and badge
     addXP(50);
     if (!user.badges.includes('🎯')) {
@@ -125,6 +141,26 @@ export default function CaseSimulator() {
     setShowResults(false);
     setScores(null);
     setExpanded({ 1: true });
+  };
+
+  const handleFeedback = async () => {
+    const result = await requestFeedback({
+      userId: user.id || 'demo',
+      caseId: 'gamebox-profitability',
+      steps: {
+        clarifying: responses.clarifying,
+        hypothesis: responses.hypothesis,
+        framework: responses.framework || responses.customFramework,
+        calculations: { profit: responses.profit, margin: responses.margin },
+        recommendation: responses.recommendation
+      }
+    });
+    if (result) {
+      track('ai_feedback_received', { 
+        caseId: 'gamebox-profitability', 
+        cached: !!result.cached 
+      });
+    }
   };
 
   const Panel = ({ number, title, children, isComplete }) => (
@@ -462,6 +498,16 @@ export default function CaseSimulator() {
                   </motion.div>
                 )}
               </div>
+
+              <button
+                onClick={handleFeedback}
+                disabled={loading}
+                className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 mb-3"
+              >
+                {loading ? 'Analyzing...' : 'Get AI Feedback'}
+              </button>
+              {error && <p className="text-red-600 text-sm mb-3">{error}</p>}
+              <FeedbackPanel feedback={data} />
 
               <button
                 onClick={handleClose}
