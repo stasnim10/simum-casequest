@@ -24,6 +24,13 @@ test.describe('Visual baselines', () => {
     await expect(page).toHaveScreenshot('case-simulator.png', { fullPage: true, maxDiffPixelRatio: 0.01 });
   });
 
+  test('Case simulator with voice mode', async ({ page }) => {
+    await goAndSettle(page, '/#/case');
+    await page.locator('text=Voice Mode').click();
+    await page.waitForTimeout(200);
+    await expect(page).toHaveScreenshot('case-simulator-voice.png', { fullPage: true, maxDiffPixelRatio: 0.01 });
+  });
+
   test('Lesson L1', async ({ page }) => {
     await goAndSettle(page, '/#/lesson/l1');
     await expect(page).toHaveScreenshot('lesson-l1.png', { fullPage: true, maxDiffPixelRatio: 0.01 });
