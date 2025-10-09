@@ -1,12 +1,42 @@
-* {
-  box-sizing: border-box;
+:root {
+  --cq-bg: 255 255 255;
+  --cq-fg: 17 24 39;
+  --cq-muted: 107 114 128;
+  --cq-brand: 37 99 235;
+  --cq-brand-2: 99 102 241;
+  --cq-card: 249 250 251;
+  --cq-ring: 59 130 246;
+}
+
+html, body, #root {
+  height: 100%;
 }
 
 body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  color: rgb(var(--cq-fg));
+  background: rgb(var(--cq-bg));
+  text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+}
+
+.gradient-bg {
+  background-image:
+    radial-gradient(1200px 600px at 20% -10%, rgba(59, 130, 246, 0.12), transparent 60%),
+    radial-gradient(800px 400px at 90% 10%, rgba(99, 102, 241, 0.10), transparent 60%);
+}
+
+.card {
+  @apply rounded-2xl bg-white shadow-sm border border-gray-200/70;
+}
+
+.btn {
+  @apply inline-flex items-center justify-center rounded-xl px-4 py-2 font-medium transition;
+}
+
+.btn-primary {
+  @apply btn text-white bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-blue-500/50;
+}
+
+.link-muted {
+  @apply text-gray-500 hover:text-gray-700;
 }
