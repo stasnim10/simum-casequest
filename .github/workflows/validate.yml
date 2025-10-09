@@ -12,9 +12,15 @@ jobs:
       - run: npx playwright install --with-deps
       - run: npm run build
       - run: npm run test:ui
+      - run: npx playwright test tests/visual.spec.ts
       - run: npm run test:perf
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: screenshots
           path: screenshots/
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: snapshot-diffs
+          path: test-results/
