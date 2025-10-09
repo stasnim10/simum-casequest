@@ -1,0 +1,32 @@
+name: Ping Production
+on:
+  schedule:
+    - cron: "*/30 * * * *"  # Every 30 minutes
+  workflow_dispatch:  # Allow manual trigger
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check frontend
+        run: |
+          set -e
+          echo "Checking frontend..."
+          curl -fsS https://www.casequestapp.com/#/learn >/dev/null
+          echo "✓ Frontend is up"
+      
+      - name: Check API health
+        run: |
+          set -e
+          echo "Checking API health..."
+          curl -fsS https://api.casequestapp.com/api/health >/dev/null
+          echo "✓ API is up"
+      
+      - name: Check API feedback endpoint
+        run: |
+          set -e
+          echo "Checking API feedback endpoint..."
+          curl -fsS -X POST https://api.casequestapp.com/api/feedback \
+            -H "Content-Type: application/json" \
+            -d '{"userId":"healthcheck","caseId":"test","steps":{"clarifying":[],"hypothesis":"test","structure":"test","quant":{},"recommendation":"test"}}' \
+            >/dev/null
+          echo "✓ API feedback endpoint is up"
