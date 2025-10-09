@@ -1,4 +1,4 @@
-import { modules, lessons } from './seed';
+import { modules, lessons } from './seed.js';
 
 export const getModuleList = () => {
   return modules;
