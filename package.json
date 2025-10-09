@@ -14,7 +14,9 @@
     "clean": "rm -rf dist node_modules && npm install",
     "rebuild": "npm run clean && npm run build",
     "redeploy": "npm run rebuild && npm run deploy",
-    "restore-domain": "git checkout gh-pages && echo 'www.casequestapp.com' > CNAME && git add CNAME && git commit -m 'restore domain' || echo 'CNAME already ok' && git push && git checkout -"
+    "restore-domain": "git checkout gh-pages && echo 'www.casequestapp.com' > CNAME && git add CNAME && git commit -m 'restore domain' || echo 'CNAME already ok' && git push && git checkout -",
+    "test:ui": "playwright test --reporter=line",
+    "test:perf": "lhci autorun"
   },
   "dependencies": {
     "framer-motion": "^12.23.22",
@@ -27,6 +29,8 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",
+    "@lhci/cli": "^0.15.1",
+    "@playwright/test": "^1.56.0",
     "@types/node": "^24.7.1",
     "@types/react": "^19.1.16",
     "@types/react-dom": "^19.1.9",
