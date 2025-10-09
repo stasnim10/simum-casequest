@@ -2,39 +2,29 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>CaseQuest</title>
-    <!-- Updated: 2025-10-09 11:35 - SPA routing fix -->
+    <title>Redirecting...</title>
     <script type="text/javascript">
-      // Single Page Apps for GitHub Pages
-      // MIT License
-      // https://github.com/rafgraph/spa-github-pages
-      // This script takes the current url and converts the path and query
-      // string into just a query string, and then redirects the browser
-      // to the new url with only a query string and hash fragment,
-      // e.g. https://www.foo.tld/one/two?a=b&c=d#qwe, becomes
-      // https://www.foo.tld/?/one/two&a=b~and~c=d#qwe
-      // Note: this 404.html file must be at least 512 bytes for it to work
-      // with Internet Explorer (it is currently > 512 bytes)
-
-      // If you're creating a Project Pages site and NOT using a custom domain,
-      // then set pathSegmentsToKeep to 1 (enterprise users may need to set it to > 1).
-      // This way the code will only replace the route part and not the real directory.
-      // For example: https://username.github.io/repo-name/one/two?a=b&c=d#qwe becomes
-      // https://username.github.io/repo-name/?/one/two&a=b~and~c=d#qwe
-      // Otherwise, leave pathSegmentsToKeep as 0.
-      var pathSegmentsToKeep = 0;
-
-      var l = window.location;
-      l.replace(
-        l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
-        l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') + '/?/' +
-        l.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/').replace(/&/g, '~and~') +
-        (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
-        l.hash
-      );
+      (function(l) {
+        // If a redirect param exists, use it
+        if (l.search) {
+          var q = {};
+          l.search.slice(1).split('&').forEach(function(v) {
+            var a = v.split('=');
+            q[a[0]] = a.slice(1).join('=');
+          });
+          if (q.p) {
+            window.history.replaceState(null, null, q.p + (q.q ? ('?' + q.q) : '') + l.hash);
+            return;
+          }
+        }
+        // Otherwise convert the current path to a query and redirect to index.html
+        var p = l.pathname.replace(/\/+$/, '');
+        var redirect = '/index.html?p=' + encodeURIComponent(p);
+        var query = l.search && l.search.slice(1);
+        if (query) redirect += '&q=' + encodeURIComponent(query);
+        window.location.replace(redirect + l.hash);
+      })(window.location);
     </script>
   </head>
-  <body>
-    <!-- SPA routing fallback for GitHub Pages -->
-  </body>
+  <body>Redirecting...</body>
 </html>
