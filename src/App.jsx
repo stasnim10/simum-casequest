@@ -1,35 +1,49 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useEffect } from 'react';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import Layout from './components/Layout';
+import Landing from './pages/Landing';
+import LearningPath from './pages/LearningPath';
+import LessonPlayer from './pages/LessonPlayer';
+import CaseSimulator from './pages/CaseSimulator';
+import Dashboard from './pages/Dashboard';
+import Leaderboard from './pages/Leaderboard';
+import Review from './pages/Review';
+import { seedDemoData } from './data/seed';
+import useStore from './state/store';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const navigate = useNavigate();
+  const { setUser } = useStore();
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    
+    if (params.get('demo') === '1') {
+      const demoUser = seedDemoData();
+      setUser(demoUser);
+    }
+    
+    if (params.get('pitch') === '1') {
+      const demoUser = seedDemoData();
+      setUser(demoUser);
+      navigate('/dashboard?pitch=1');
+    }
+  }, [navigate, setUser]);
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <Routes>
+      <Route path="/" element={<Landing />} />
+      <Route element={<Layout />}>
+        <Route path="/learn" element={<LearningPath />} />
+        <Route path="/lesson/:id" element={<LessonPlayer />} />
+        <Route path="/case" element={<CaseSimulator />} />
+        <Route path="/review" element={<Review />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/leaderboard" element={<Leaderboard />} />
+      </Route>
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
 }
 
-export default App
+export default App;
