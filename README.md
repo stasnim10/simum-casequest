@@ -1,5 +1,11 @@
 # CaseQuest - Gamified Consulting Prep Web App
 
+**© 2025 stasnim10. All Rights Reserved.**
+
+⚠️ **PROPRIETARY SOFTWARE** - This project is protected by copyright law. Unauthorized copying, distribution, or use is strictly prohibited. See [LICENSE](./LICENSE) for details.
+
+---
+
 CaseQuest is a gamified, mobile-first learning platform designed to make consulting and case interview preparation engaging and effective, inspired by the learning model of Duolingo.
 
 ## Features
@@ -119,6 +125,32 @@ firebase login
 firebase init hosting
 firebase deploy
 ```
+
+## Analytics
+
+CaseQuest uses PostHog for product analytics and behavioral insights.
+
+### Setup
+1. Sign up at [PostHog](https://posthog.com)
+2. Create a new project
+3. Copy your Project API Key
+4. Add to `.env.local`:
+```env
+VITE_POSTHOG_KEY=your_project_api_key
+VITE_POSTHOG_HOST=https://app.posthog.com
+```
+
+### Tracked Events
+- `lesson_started` - User begins a lesson
+- `lesson_completed` - User completes a lesson with score
+- `sim_case_started` - User starts case simulation
+- `sim_case_completed` - User completes case with duration
+- `ai_feedback_received` - User receives AI feedback (cached status)
+- `next_best_lesson_clicked` - User clicks adaptive recommendation
+- `xp_gained` - User earns XP
+
+### Disable Analytics
+To disable analytics, remove or clear `VITE_POSTHOG_KEY` in `.env.local`.
 
 ## Contributing
 

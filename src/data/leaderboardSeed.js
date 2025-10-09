@@ -1,0 +1,17 @@
+export const leaderboardUsers = [
+  { name: 'Alex Chen', xp: 450 },
+  { name: 'Sarah Kim', xp: 380 },
+  { name: 'Mike Johnson', xp: 320 },
+  { name: 'Emma Davis', xp: 290 },
+  { name: 'Priya Patel', xp: 260 },
+  { name: 'James Wilson', xp: 240 },
+  { name: 'Lisa Anderson', xp: 220 },
+  { name: 'David Lee', xp: 190 },
+  { name: 'Maria Garcia', xp: 170 },
+  { name: 'Tom Brown', xp: 150 },
+  { name: 'Anna Taylor', xp: 130 },
+  { name: 'Chris Martin', xp: 110 },
+  { name: 'Sophie White', xp: 95 },
+  { name: 'Ryan Clark', xp: 80 },
+  { name: 'Nina Rodriguez', xp: 65 },
+];

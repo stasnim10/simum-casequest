@@ -1,12 +1,16 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle, XCircle, ArrowRight, Star } from 'lucide-react';
+import { CheckCircle, XCircle, ArrowRight, Star, ArrowLeft, X } from 'lucide-react';
+import CaseMascot from './components/CaseMascot';
+import CelebrationAnimation from './components/CelebrationAnimation';
 
-const LessonScreen = ({ lesson, onComplete }) => {
+const LessonScreen = ({ lesson, onComplete, onBack }) => {
   const [view, setView] = useState('LEARNING');
   const [selectedAnswer, setSelectedAnswer] = useState(null);
-  const [quizStatus, setQuizStatus] = useState(null); // null, 'correct', 'incorrect'
+  const [quizStatus, setQuizStatus] = useState(null);
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [mascotMood, setMascotMood] = useState('thinking');
 
   const quiz = lesson.quiz && lesson.quiz.length > 0 ? lesson.quiz[0] : null;
 
@@ -37,18 +41,33 @@ const LessonScreen = ({ lesson, onComplete }) => {
 
     if (selectedAnswer === quiz.correctAnswer) {
       setQuizStatus('correct');
+      setMascotMood('celebrating');
+      setShowCelebration(true);
+      setTimeout(() => setShowCelebration(false), 2000);
     } else {
       setQuizStatus('incorrect');
+      setMascotMood('sad');
     }
   };
 
   const handleFinish = () => {
-    // Grant the XP reward upon completion
     onComplete(lesson.xp_reward);
   };
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col justify-center items-center p-4 font-sans">
+      {/* Back Button */}
+      <div className="fixed top-4 left-4 z-10">
+        <button
+          onClick={onBack}
+          className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-sm hover:shadow-md transition-all text-gray-600 hover:text-gray-800"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span className="text-sm font-medium">Back</span>
+        </button>
+      </div>
+      
+      {showCelebration && <CelebrationAnimation />}
       <div className="w-full max-w-2xl">
         <div className="bg-white rounded-xl shadow-2xl overflow-hidden">
           <div className="p-8">
@@ -84,6 +103,13 @@ const LessonScreen = ({ lesson, onComplete }) => {
                   exit={{ opacity: 0, x: -50 }}
                   transition={{ duration: 0.3 }}
                 >
+                  <div className="flex justify-center mb-4">
+                    <CaseMascot 
+                      mood={mascotMood} 
+                      message={quizStatus === 'correct' ? 'Great job! 🎉' : quizStatus === 'incorrect' ? 'Try again!' : 'You got this!'} 
+                      size="md" 
+                    />
+                  </div>
                   <h2 className="text-2xl font-semibold text-center text-gray-800 mb-6">{quiz.question}</h2>
                   <div className="space-y-3">
                     {quiz.options.map((option, index) => {

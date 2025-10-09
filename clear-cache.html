@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Clear CaseQuest Cache</title>
+  <style>
+    body { font-family: system-ui; max-width: 600px; margin: 50px auto; padding: 20px; }
+    button { background: #3B82F6; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 16px; }
+    button:hover { background: #2563EB; }
+    .status { margin-top: 20px; padding: 12px; border-radius: 8px; }
+    .success { background: #D1FAE5; color: #065F46; }
+    .info { background: #DBEAFE; color: #1E40AF; }
+  </style>
+</head>
+<body>
+  <h1>🧹 Clear CaseQuest Cache</h1>
+  <p>If you're seeing an old version of CaseQuest, click the button below to clear all cached data.</p>
+  
+  <button onclick="clearAllCaches()">Clear Cache & Reload</button>
+  
+  <div id="status"></div>
+  
+  <script>
+    async function clearAllCaches() {
+      const status = document.getElementById('status');
+      status.className = 'status info';
+      status.textContent = 'Clearing cache...';
+      
+      try {
+        // Unregister all service workers
+        if ('serviceWorker' in navigator) {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          for (let registration of registrations) {
+            await registration.unregister();
+          }
+        }
+        
+        // Clear all caches
+        if ('caches' in window) {
+          const cacheNames = await caches.keys();
+          await Promise.all(cacheNames.map(name => caches.delete(name)));
+        }
+        
+        // Clear localStorage
+        localStorage.clear();
+        
+        // Clear sessionStorage
+        sessionStorage.clear();
+        
+        status.className = 'status success';
+        status.textContent = '✅ Cache cleared! Reloading in 2 seconds...';
+        
+        setTimeout(() => {
+          window.location.href = '/simum-casequest/';
+        }, 2000);
+        
+      } catch (error) {
+        status.className = 'status';
+        status.style.background = '#FEE2E2';
+        status.style.color = '#991B1B';
+        status.textContent = '❌ Error: ' + error.message;
+      }
+    }
+  </script>
+</body>
+</html>

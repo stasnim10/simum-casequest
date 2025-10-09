@@ -2,26 +2,33 @@
   "name": "casequest",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://stasnim10.github.io/simum-casequest",
+  "homepage": ".",
   "dependencies": {
     "@testing-library/jest-dom": "^5.16.4",
     "@testing-library/react": "^13.3.0",
     "@testing-library/user-event": "^13.5.0",
-    "firebase": "^9.23.0",
+    "firebase": "^12.3.0",
     "framer-motion": "^10.16.4",
     "lucide-react": "^0.263.1",
+    "openai": "^4.104.0",
+    "posthog-js": "^1.273.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-scripts": "5.0.1",
-    "web-vitals": "^2.1.4"
+    "react-router-dom": "^7.9.3",
+    "react-scripts": "^5.0.1",
+    "web-vitals": "^2.1.4",
+    "zustand": "^5.0.8"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
+    "test:vitest": "vitest run",
+    "test:watch": "vitest",
     "eject": "react-scripts eject",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d build"
+    "deploy": "gh-pages -d build",
+    "setup-ai": "node setup-api-key.js"
   },
   "eslintConfig": {
     "extends": [
@@ -42,9 +49,11 @@
     ]
   },
   "devDependencies": {
+    "@vitest/ui": "^3.2.4",
     "autoprefixer": "^10.4.14",
     "gh-pages": "^6.3.0",
     "postcss": "^8.4.24",
-    "tailwindcss": "^3.3.0"
+    "tailwindcss": "^3.3.0",
+    "vitest": "^3.2.4"
   }
 }

@@ -30,6 +30,7 @@ const GuidedPath = ({ lessons, userProgress, onStartLesson }) => {
               const isCompleted = userProgress?.completed_lessons?.includes(lesson.id);
               const isActive = userProgress?.completed_lessons?.length === lessonCounter - 1;
               const isLocked = userProgress?.completed_lessons?.length < lessonCounter - 1;
+              const canAccess = isCompleted || isActive || !isLocked;
 
               let statusIcon;
               if (isCompleted) {
@@ -55,12 +56,16 @@ const GuidedPath = ({ lessons, userProgress, onStartLesson }) => {
                     <h3 className={`font-semibold ${isLocked ? 'text-gray-400' : 'text-gray-800'}`}>{lesson.title}</h3>
                     <p className={`text-sm ${isLocked ? 'text-gray-400' : 'text-gray-500'}`}>{lesson.xp_reward} XP</p>
                   </div>
-                  {isActive && (
+                  {canAccess && (
                     <button
                       onClick={() => onStartLesson(lesson)}
-                      className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+                      className={`px-5 py-2 rounded-lg font-semibold transition-colors ${
+                        isCompleted 
+                          ? 'bg-green-100 text-green-700 hover:bg-green-200 border border-green-300' 
+                          : 'bg-blue-600 text-white hover:bg-blue-700'
+                      }`}
                     >
-                      Start
+                      {isCompleted ? 'Review' : 'Start'}
                     </button>
                   )}
                 </motion.div>
