@@ -5,6 +5,7 @@ import useStore from '../state/store';
 import useCaseFeedback from '../hooks/useCaseFeedback';
 import FeedbackPanel from '../components/FeedbackPanel';
 import VoiceBar from '../components/VoiceBar';
+import VoiceSettings from '../components/VoiceSettings';
 import { track } from '../lib/analytics';
 import { getAllCases } from '../data/api';
 import { suggestFollowups } from '../lib/voiceFollowups';
@@ -41,10 +42,15 @@ export default function CaseSimulator() {
   const hasTTS = hasTTSSupport();
   const [ttsMode, setTtsMode] = useState(false);
   const [currentSpokenText, setCurrentSpokenText] = useState('');
+  const [hints, setHints] = useState([]);
 
   useEffect(() => {
     track('sim_case_started', { caseId: currentCase.id });
   }, [currentCase.id]);
+
+  useEffect(() => {
+    suggestFollowups({ step: activeStep, answers, caseData: currentCase }).then(setHints);
+  }, [activeStep, answers]);
 
   const handleVoiceConsent = (checked) => {
     setVoiceConsent(checked);
@@ -100,7 +106,7 @@ export default function CaseSimulator() {
 
   const speakFollowups = async () => {
     if (!ttsMode || !hasTTS) return;
-    const followups = suggestFollowups({ step: activeStep, answers, caseData: currentCase });
+    const followups = await suggestFollowups({ step: activeStep, answers, caseData: currentCase });
     for (let i = 0; i < followups.length; i++) {
       setCurrentSpokenText(followups[i]);
       speak(followups[i]);
@@ -214,6 +220,7 @@ export default function CaseSimulator() {
                   {ttsMode ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
                 </label>
               )}
+              {ttsEnabled && hasTTS && ttsMode && <VoiceSettings />}
             </div>
           </div>
           <div className="bg-white rounded-2xl p-6 shadow-sm">
@@ -306,7 +313,7 @@ export default function CaseSimulator() {
               <div className="mb-4 p-3 bg-purple-50 rounded-lg">
                 <p className="text-xs font-medium text-purple-900 mb-2">💡 Suggested prompts:</p>
                 <ul className="text-xs text-purple-700 space-y-1">
-                  {suggestFollowups({ step: activeStep, answers, caseData: currentCase }).map((hint, i) => (
+                  {hints.map((hint, i) => (
                     <li key={i}>• {hint}</li>
                   ))}
                 </ul>

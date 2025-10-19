@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { Mic, MicOff, X, Check } from 'lucide-react';
+import { Mic, MicOff, X, Check, Edit2 } from 'lucide-react';
 
 export default function VoiceBar({ onFinalTranscript, onPartial, onCancel, onComplete }) {
   const [active, setActive] = useState(false);
   const [partial, setPartial] = useState('');
   const [finals, setFinals] = useState([]);
+  const [editing, setEditing] = useState(false);
+  const [editText, setEditText] = useState('');
   const recognitionRef = useRef(null);
 
   useEffect(() => {
@@ -42,20 +44,48 @@ export default function VoiceBar({ onFinalTranscript, onPartial, onCancel, onCom
 
   const start = () => { try { recognitionRef.current?.start(); setActive(true); } catch {} };
   const stop  = () => { try { recognitionRef.current?.stop();  setActive(false); } catch {} };
+  
+  const startEdit = () => {
+    setEditText(finals.join(' ').trim());
+    setEditing(true);
+  };
+
+  const saveEdit = () => {
+    setFinals([editText]);
+    setEditing(false);
+  };
 
   return (
-    <div className="card p-3 flex items-center gap-3">
-      <button onClick={active ? stop : start} className={`btn ${active ? 'btn-primary' : ''}`}>
-        {active ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
-        <span className="ml-2">{active ? 'Listening…' : 'Push to talk'}</span>
-      </button>
-      <div className="flex-1 min-h-[2rem] text-sm text-gray-600 truncate">
-        {partial || finals.slice(-1)[0] || 'Say your hypothesis, structure, or next step…'}
+    <div className="card p-3 space-y-2">
+      <div className="flex items-center gap-3">
+        <button onClick={active ? stop : start} className={`btn ${active ? 'btn-primary' : ''}`}>
+          {active ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
+          <span className="ml-2">{active ? 'Listening…' : 'Push to talk'}</span>
+        </button>
+        <div className="flex-1 min-h-[2rem] text-sm text-gray-600 truncate">
+          {partial || finals.slice(-1)[0] || 'Say your hypothesis, structure, or next step…'}
+        </div>
+        {finals.length > 0 && !editing && (
+          <button onClick={startEdit} className="btn btn-sm">
+            <Edit2 className="h-4 w-4" />
+          </button>
+        )}
+        <button onClick={() => onCancel?.()} className="btn"><X className="h-4 w-4" /><span className="ml-2">Cancel</span></button>
+        <button onClick={() => onComplete?.(finals.join(' ').trim())} className="btn btn-primary">
+          <Check className="h-4 w-4" /><span className="ml-2">Use transcript</span>
+        </button>
       </div>
-      <button onClick={() => onCancel?.()} className="btn"><X className="h-4 w-4" /><span className="ml-2">Cancel</span></button>
-      <button onClick={() => onComplete?.(finals.join(' ').trim())} className="btn btn-primary">
-        <Check className="h-4 w-4" /><span className="ml-2">Use transcript</span>
-      </button>
+      {editing && (
+        <div className="flex gap-2">
+          <textarea 
+            value={editText} 
+            onChange={e => setEditText(e.target.value)}
+            className="flex-1 px-3 py-2 border rounded text-sm"
+            rows="3"
+          />
+          <button onClick={saveEdit} className="btn btn-primary">Save</button>
+        </div>
+      )}
     </div>
   );
 }

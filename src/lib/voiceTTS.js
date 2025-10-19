@@ -1,24 +1,41 @@
 import { track } from './analytics';
 
 let currentUtterance = null;
+let voicePrefs = JSON.parse(localStorage.getItem('cq_voice_prefs') || '{"rate":1.05,"pitch":1,"volume":1,"voiceName":null}');
 
-export function speak(text, voice = null, rate = 1.05) {
+export function getVoices() {
+  return window.speechSynthesis?.getVoices() || [];
+}
+
+export function getVoicePrefs() {
+  return voicePrefs;
+}
+
+export function setVoicePrefs(prefs) {
+  voicePrefs = { ...voicePrefs, ...prefs };
+  localStorage.setItem('cq_voice_prefs', JSON.stringify(voicePrefs));
+}
+
+function selectVoice() {
+  const voices = getVoices();
+  if (voicePrefs.voiceName) {
+    const selected = voices.find(v => v.name === voicePrefs.voiceName);
+    if (selected) return selected;
+  }
+  const enVoices = voices.filter(v => v.lang.startsWith('en'));
+  return enVoices.find(v => v.name.includes('Samantha') || v.name.includes('Victoria') || v.name.includes('Female')) || enVoices[0];
+}
+
+export function speak(text, voice = null, rate = null) {
   if (!window.speechSynthesis) return false;
   
   cancelSpeech();
   
   const utterance = new SpeechSynthesisUtterance(text);
-  utterance.rate = rate;
-  
-  if (voice) {
-    utterance.voice = voice;
-  } else {
-    const voices = window.speechSynthesis.getVoices();
-    const femaleEnglish = voices.find(v => 
-      v.lang.startsWith('en') && (v.name.includes('Female') || v.name.includes('Samantha') || v.name.includes('Victoria'))
-    ) || voices.find(v => v.lang.startsWith('en'));
-    if (femaleEnglish) utterance.voice = femaleEnglish;
-  }
+  utterance.rate = rate || voicePrefs.rate;
+  utterance.pitch = voicePrefs.pitch;
+  utterance.volume = voicePrefs.volume;
+  utterance.voice = voice || selectVoice();
   
   utterance.onstart = () => track('tts_spoken', { chars: text.length });
   utterance.onerror = (e) => console.error('TTS error:', e);
