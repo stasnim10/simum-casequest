@@ -15,9 +15,9 @@ for (const { path, selector } of routes) {
   });
 }
 
-test('Voice mode toggle visible on case simulator', async ({ page }) => {
+test('Voice toggles visible on case simulator', async ({ page }) => {
   await page.goto('https://www.casequestapp.com/#/case');
   await page.waitForTimeout(1000); // Wait for React to render
-  const voiceToggle = page.locator('input[type="checkbox"]').filter({ hasText: /Voice Mode/i }).or(page.locator('text=Voice Mode'));
-  await expect(voiceToggle.first()).toBeVisible({ timeout: 10000 });
+  await expect(page.getByLabel('Voice Input')).toBeVisible({ timeout: 10000 });
+  await expect(page.getByLabel('Voice Output')).toBeVisible({ timeout: 10000 });
 });

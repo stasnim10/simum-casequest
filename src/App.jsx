@@ -8,6 +8,7 @@ import CaseSimulator from './pages/CaseSimulator';
 import Dashboard from './pages/Dashboard';
 import Leaderboard from './pages/Leaderboard';
 import Review from './pages/Review';
+import MarketSizing from './pages/MarketSizing';
 import { seedDemoData } from './data/seed';
 import useStore from './state/store';
 
@@ -37,6 +38,7 @@ function App() {
         <Route path="/learn" element={<LearningPath />} />
         <Route path="/lesson/:id" element={<LessonPlayer />} />
         <Route path="/case" element={<CaseSimulator />} />
+        <Route path="/market-sizing" element={<MarketSizing />} />
         <Route path="/review" element={<Review />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/leaderboard" element={<Leaderboard />} />

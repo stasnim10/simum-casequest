@@ -22,6 +22,19 @@ const useStore = create(
       lessonProgress: {},
       streakHistory: {},
       reviewItems: {}, // { questionId: { lessonId, questionData, nextReview, intervalIndex, lastQuality } }
+      marketSizing: {
+        introSeen: false,
+        lessonStatus: {
+          lesson1: { completed: false, score: null },
+          lesson2: { completed: false, score: null },
+          lesson3: { completed: false, score: null }
+        },
+        practiceAttempts: [],
+        hintsUsed: 0,
+        feedbackShown: 0,
+        reviewCount: 0,
+        masteryUnlocked: false
+      },
 
       setUser: (user) => set({ user }),
       
@@ -177,13 +190,94 @@ const useStore = create(
         });
       },
 
+      markMarketIntro: () => {
+        set((state) => ({
+          marketSizing: {
+            ...state.marketSizing,
+            introSeen: true
+          }
+        }));
+      },
+
+      completeMarketLesson: (lessonKey, { score }) => {
+        set((state) => ({
+          marketSizing: {
+            ...state.marketSizing,
+            lessonStatus: {
+              ...state.marketSizing.lessonStatus,
+              [lessonKey]: { completed: true, score }
+            }
+          }
+        }));
+      },
+
+      recordMarketHint: () => {
+        set((state) => ({
+          marketSizing: {
+            ...state.marketSizing,
+            hintsUsed: state.marketSizing.hintsUsed + 1
+          }
+        }));
+      },
+
+      recordMarketFeedback: () => {
+        set((state) => ({
+          marketSizing: {
+            ...state.marketSizing,
+            feedbackShown: state.marketSizing.feedbackShown + 1
+          }
+        }));
+      },
+
+      saveMarketAttempt: (attempt) => {
+        const { marketSizing } = get();
+        const nextAttempts = [attempt, ...marketSizing.practiceAttempts].slice(0, 10);
+        set({
+          marketSizing: {
+            ...marketSizing,
+            practiceAttempts: nextAttempts
+          }
+        });
+      },
+
+      recordMarketReview: () => {
+        set((state) => ({
+          marketSizing: {
+            ...state.marketSizing,
+            reviewCount: state.marketSizing.reviewCount + 1
+          }
+        }));
+      },
+
+      unlockMarketMastery: () => {
+        set((state) => ({
+          marketSizing: {
+            ...state.marketSizing,
+            masteryUnlocked: true
+          }
+        }));
+      },
+
       resetDemo: () => {
         localStorage.removeItem('casequest-storage');
         set({
           user: defaultUser,
           lessonProgress: {},
           streakHistory: {},
-          reviewItems: {}
+          reviewItems: {},
+          marketSizing: {
+            introSeen: false,
+            lessonStatus: {
+              lesson1: { completed: false, score: null },
+              lesson2: { completed: false, score: null },
+              lesson3: { completed: false, score: null }
+            },
+            practiceAttempts: [],
+            hintsUsed: 0,
+            feedbackShown: 0,
+            reviewCount: 0,
+            masteryUnlocked: false
+          }
         });
       }
     }),
@@ -193,7 +287,8 @@ const useStore = create(
         user: state.user,
         lessonProgress: state.lessonProgress,
         streakHistory: state.streakHistory,
-        reviewItems: state.reviewItems
+        reviewItems: state.reviewItems,
+        marketSizing: state.marketSizing
       })
     }
   )

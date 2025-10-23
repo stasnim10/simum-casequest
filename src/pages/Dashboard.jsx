@@ -1,12 +1,14 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Star, Flame, Trophy, Target, RotateCcw, ArrowRight, TrendingUp, TrendingDown, Settings, Shield } from 'lucide-react';
+import { Star, Flame, Trophy, Target, RotateCcw, ArrowRight, TrendingUp, TrendingDown, Settings, Shield, Sparkles } from 'lucide-react';
 import useStore from '../state/store';
 import { getModuleList, getLessonsByModule } from '../data/api';
 import { getDueItems } from '../services/spacedRepetition';
 import NextBestLessonCard from '../components/NextBestLessonCard';
 import { pickNextLesson } from '../lib/adaptiveSelector';
+import MVPAnalytics from '../components/MVPAnalytics';
+import { track } from '../lib/analytics';
 
 export default function Dashboard() {
   const { user, lessonProgress, reviewItems, resetDemo, setDailyGoal } = useStore();
@@ -179,6 +181,35 @@ export default function Dashboard() {
               transition={{ duration: 0.5 }}
               className="bg-gradient-to-r from-indigo-500 to-purple-500 h-full rounded-full"
             />
+          </div>
+        </motion.div>
+
+        {/* Market Sizing Spotlight */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.08 }}
+          className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 rounded-2xl p-6 text-white shadow-lg mb-6"
+        >
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2 uppercase text-xs tracking-wide text-indigo-100 mb-2">
+                <Sparkles className="w-4 h-4" />
+                Featured MVP Flow
+              </div>
+              <h3 className="text-2xl font-semibold mb-1">Market Sizing Masterclass</h3>
+              <p className="text-indigo-100 text-sm max-w-xl">
+                Learn top-down and bottom-up sizing, then tackle a voice-enabled practice case with instant feedback. Perfect highlight for investor demos.
+              </p>
+            </div>
+            <Link
+              to="/market-sizing"
+              onClick={() => track('market_sizing_card_clicked')}
+              className="inline-flex items-center gap-2 bg-white text-indigo-700 px-5 py-3 rounded-xl font-semibold shadow-sm hover:bg-indigo-50"
+            >
+              Launch Module
+              <ArrowRight className="w-5 h-5" />
+            </Link>
           </div>
         </motion.div>
 
@@ -356,6 +387,15 @@ export default function Dashboard() {
             </div>
           </motion.div>
         )}
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1 }}
+          className="mt-6"
+        >
+          <MVPAnalytics />
+        </motion.div>
 
         {/* Daily Goal Modal */}
         {showGoalModal && !isPitchMode && (

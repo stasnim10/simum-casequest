@@ -25,10 +25,19 @@ test.describe('Visual baselines', () => {
   });
 
   test('Case simulator with voice mode', async ({ page }) => {
+    await page.addInitScript(() => {
+      window.localStorage.setItem('cq_voice_consent', '1');
+    });
     await goAndSettle(page, '/#/case');
-    await page.locator('text=Voice Mode').click();
+    await page.getByLabel('Voice Input').check();
+    await page.getByLabel('Voice Output').check();
     await page.waitForTimeout(200);
     await expect(page).toHaveScreenshot('case-simulator-voice.png', { fullPage: true, maxDiffPixelRatio: 0.01 });
+  });
+
+  test('Market sizing module', async ({ page }) => {
+    await goAndSettle(page, '/#/market-sizing');
+    await expect(page).toHaveScreenshot('market-sizing.png', { fullPage: true, maxDiffPixelRatio: 0.01 });
   });
 
   test('Lesson L1', async ({ page }) => {

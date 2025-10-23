@@ -11,6 +11,13 @@ export const modules = [
     summary: 'Revenue, cost, drivers',
     prereq: 'm1',
     lessons: ['l6', 'l7', 'l8', 'l9', 'l10']
+  },
+  {
+    id: 'm3',
+    title: 'Market Sizing Mastery',
+    summary: 'Top-down, bottom-up, practice cases',
+    prereq: 'm2',
+    lessons: ['ms1', 'ms2', 'ms3']
   }
 ];
 
@@ -331,6 +338,102 @@ export const lessons = [
         correct: 105,
         tolerance: 5,
         rationale: '(200*1.2) - (150*0.9) = 240 - 135 = 105'
+      }
+    ]
+  },
+  {
+    id: 'ms1',
+    moduleId: 'm3',
+    title: 'Top-Down Market Sizing',
+    objectives: ['Define target population', 'Apply funnel filters', 'Cross-check results'],
+    quiz: [
+      {
+        id: 'q31',
+        type: 'mcq',
+        stem: 'First step in a top-down market sizing?',
+        options: ['List product features', 'Start with total population or TAM', 'Jump to revenue'],
+        answer: 'Start with total population or TAM',
+        rationale: 'Anchor the problem with a broad base before narrowing.'
+      },
+      {
+        id: 'q32',
+        type: 'fill',
+        stem: 'Each filter in a funnel should be both ____ and data-backed.',
+        accept: ['mece', 'MECE'],
+        rationale: 'Keeps the logic mutually exclusive and collectively exhaustive.'
+      },
+      {
+        id: 'q33',
+        type: 'calc',
+        stem: 'If US population is 330M and 60% drink bottled water weekly, how many consumers?',
+        unit: 'M',
+        correct: 198,
+        tolerance: 10,
+        rationale: '330 × 0.6 ≈ 198 million.'
+      }
+    ]
+  },
+  {
+    id: 'ms2',
+    moduleId: 'm3',
+    title: 'Bottom-Up Market Sizing',
+    objectives: ['Build unit economics', 'Stress-test assumptions', 'Scale results logically'],
+    quiz: [
+      {
+        id: 'q34',
+        type: 'mcq',
+        stem: 'Bottom-up sizing typically starts with:',
+        options: ['Industry revenue reports', 'Unit-level assumptions like customers/day', 'Competitor pricing decks'],
+        answer: 'Unit-level assumptions like customers/day',
+        rationale: 'You build the market from granular drivers.'
+      },
+      {
+        id: 'q35',
+        type: 'fill',
+        stem: 'Always sanity check your answer with a ____ range.',
+        accept: ['reasonable', 'plausible', 'sense'],
+        rationale: 'Make sure the output passes a smell test.'
+      },
+      {
+        id: 'q36',
+        type: 'calc',
+        stem: 'A pizza shop serves 120 pies/day at $14, open 360 days. Annual revenue?',
+        unit: '$M',
+        correct: 0.6,
+        tolerance: 0.05,
+        rationale: '120 × 14 × 360 ≈ $604,800 (≈$0.6M).'
+      }
+    ]
+  },
+  {
+    id: 'ms3',
+    moduleId: 'm3',
+    title: 'Market Sizing Mastery Quiz',
+    objectives: ['Blend top-down & bottom-up', 'Check math robustness', 'Communicate recommendations'],
+    quiz: [
+      {
+        id: 'q37',
+        type: 'fill',
+        stem: 'A great market sizing answer always ends with a clear ____ and confidence level.',
+        accept: ['recommendation', 'next step'],
+        rationale: 'Close with takeaways and context.'
+      },
+      {
+        id: 'q38',
+        type: 'mcq',
+        stem: 'When numbers don\'t align, you should:',
+        options: ['Ignore the discrepancy', 'State the gap, revisit assumptions, triangulate', 'Restart from scratch silently'],
+        answer: 'State the gap, revisit assumptions, triangulate',
+        rationale: 'Consultants surface risks and reconcile.'
+      },
+      {
+        id: 'q39',
+        type: 'calc',
+        stem: 'You estimate 5,000 customers monthly spending $45 each. Annual market size?',
+        unit: '$M',
+        correct: 2.7,
+        tolerance: 0.2,
+        rationale: '5000 × 45 × 12 ≈ $2,700,000 (≈$2.7M).'
       }
     ]
   }

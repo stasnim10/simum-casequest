@@ -18,5 +18,17 @@ export const cases = [
     questions: ['What is the TAM?', 'What competitors operate regionally?'],
     structureOptions: ['Market Sizing', 'Pricing', 'Partnerships'],
     metrics: { TAM: 300, penetration: 0.1 }
+  },
+  {
+    id: 'market-sizing-001',
+    title: 'E-Scooter Maintenance Market',
+    description: 'Estimate the annual US market size for third-party electric scooter maintenance services.',
+    questions: [
+      'How many scooters require maintenance each year?',
+      'What is the average service frequency and ticket size?',
+      'Who are the primary customer segments?'
+    ],
+    structureOptions: ['Top-Down Funnel', 'Bottom-Up Build', 'Hybrid Cross-Check'],
+    metrics: { scooters: 1200, avgTickets: 85, frequency: 2 }
   }
 ];
