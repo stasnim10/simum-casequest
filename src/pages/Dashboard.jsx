@@ -9,6 +9,7 @@ import NextBestLessonCard from '../components/NextBestLessonCard';
 import { pickNextLesson } from '../lib/adaptiveSelector';
 import MVPAnalytics from '../components/MVPAnalytics';
 import { track } from '../lib/analytics';
+import MascotCoach from '../components/MascotCoach';
 
 export default function Dashboard() {
   const { user, lessonProgress, reviewItems, resetDemo, setDailyGoal } = useStore();
@@ -132,6 +133,14 @@ export default function Dashboard() {
   const performance = getPerformance();
   const dueReviews = getDueItems(reviewItems);
   const dailyProgress = Math.min((user.dailyXP / user.dailyGoal) * 100, 100);
+  const coachMessage = useMemo(() => {
+    const options = [
+      `Great to see you, ${user.name}! Keep that strategy muscle sharp.`,
+      `Your streak of ${user.streak} is pure consultant discipline. One more lesson?`,
+      `${user.badges.length ? 'Those badges look shiny!' : 'Let’s snag your first badge today.'} Ready for a quick market sizing win?`
+    ];
+    return options[user.xp % options.length];
+  }, [user.name, user.streak, user.badges.length, user.xp]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
@@ -182,6 +191,19 @@ export default function Dashboard() {
               className="bg-gradient-to-r from-indigo-500 to-purple-500 h-full rounded-full"
             />
           </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="mb-6"
+        >
+          <MascotCoach
+            message={coachMessage}
+            subtext="Coach Milo is always on standby if you need a hint or a reset."
+            footer="Tip: Investors love seeing the Market Sizing demo."
+          />
         </motion.div>
 
         {/* Market Sizing Spotlight */}

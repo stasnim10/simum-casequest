@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -17,6 +17,8 @@ import useStore from '../state/store';
 import { track } from '../lib/analytics';
 import VoiceBar from '../components/VoiceBar';
 import MVPAnalytics from '../components/MVPAnalytics';
+import MascotCoach from '../components/MascotCoach';
+import ConfettiBurst from '../components/ConfettiBurst';
 
 const STAGES = ['intro', 'lesson1', 'lesson2', 'lesson3', 'practice', 'review'];
 
@@ -309,6 +311,8 @@ export default function MarketSizing() {
   );
   const [practiceFeedback, setPracticeFeedback] = useState(null);
   const [voiceMode, setVoiceMode] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const masteryRef = useRef(marketSizing.masteryUnlocked);
 
   const currentIndex = STAGES.indexOf(stage);
   const progress = ((currentIndex + 1) / STAGES.length) * 100;
@@ -321,6 +325,13 @@ export default function MarketSizing() {
       recordMarketReview();
     }
   }, [stage, recordMarketReview]);
+
+  useEffect(() => {
+    if (marketSizing.masteryUnlocked && !masteryRef.current) {
+      setShowConfetti(true);
+    }
+    masteryRef.current = marketSizing.masteryUnlocked;
+  }, [marketSizing.masteryUnlocked]);
 
   const goToStage = (target) => {
     setStage(target);
@@ -369,6 +380,10 @@ export default function MarketSizing() {
     addXP(20);
     track('market_sizing_practice_submitted', { score: result.score });
 
+    if (result.score >= 70) {
+      setShowConfetti(true);
+    }
+
     if (result.score >= 75 && !marketSizing.masteryUnlocked) {
       unlockMarketMastery();
       addBadge('🏆 Market Sizing Pro');
@@ -396,6 +411,32 @@ export default function MarketSizing() {
   }, [stage, marketSizing.lessonStatus, practiceFeedback]);
 
   const motivationalBanner = stage === 'intro' ? QUOTES.intro : marketSizing.masteryUnlocked ? QUOTES.completion : null;
+
+  const coachDetails = useMemo(() => {
+    switch (stage) {
+      case 'intro':
+        return { message: 'Welcome to the Market Sizing dojo. I have a funnel of tips ready for you!', mood: 'encourage' };
+      case 'lesson1':
+        return { message: 'Start wide, filter smart. A crisp funnel beats guessing every time.', mood: 'focus' };
+      case 'lesson2':
+        return { message: 'Bottom-up brilliance starts with believable unit economics.', mood: 'focus' };
+      case 'lesson3':
+        return { message: 'Blend your approaches and keep the math tidy. Consultants love triangulation.', mood: 'focus' };
+      case 'practice':
+        return practiceFeedback
+          ? {
+              message: practiceFeedback.score >= 75
+                ? `Score ${practiceFeedback.score}! That insight section is pitch-ready.`
+                : `Let’s refine that insight. Try adding confidence levels and next steps.`,
+              mood: practiceFeedback.score >= 75 ? 'celebrate' : 'encourage'
+            }
+          : { message: 'Craft your structure first, then speak it out loud. I’m listening.', mood: 'encourage' };
+      case 'review':
+        return { message: 'Replay your attempt and note what to celebrate vs tweak. Reflection compounds.', mood: 'encourage' };
+      default:
+        return { message: 'Ready for your next sizing adventure?', mood: 'encourage' };
+    }
+  }, [stage, practiceFeedback]);
 
   const handleVoiceTranscript = (transcript) => {
     setPracticeResponses((prev) => ({
@@ -430,6 +471,7 @@ export default function MarketSizing() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 p-4">
       <div className="max-w-5xl mx-auto">
+        <ConfettiBurst active={showConfetti} onDone={() => setShowConfetti(false)} />
         <div className="flex items-center justify-between mb-4">
           <button
             onClick={() => navigate('/dashboard')}
@@ -461,6 +503,15 @@ export default function MarketSizing() {
               {motivationalBanner}
             </div>
           )}
+        </div>
+
+        <div className="mb-6">
+          <MascotCoach
+            message={coachDetails.message}
+            subtext={stage === 'practice' ? 'Tip: Speak your structure, then refine the text version.' : 'Coach Milo is cheering from the sidelines.'}
+            mood={coachDetails.mood}
+            footer={stage === 'practice' && practiceFeedback ? `Latest score: ${practiceFeedback.score}/100` : undefined}
+          />
         </div>
 
         <AnimatePresence mode="wait">
