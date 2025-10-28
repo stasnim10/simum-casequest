@@ -1,460 +1,294 @@
-import { useEffect, useState, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Star, Flame, Trophy, Target, RotateCcw, ArrowRight, TrendingUp, TrendingDown, Settings, Shield, Sparkles } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Flame, Sparkles, ArrowRight, Zap, Repeat, BarChart3 } from 'lucide-react';
 import useStore from '../state/store';
 import { getModuleList, getLessonsByModule } from '../data/api';
-import { getDueItems } from '../services/spacedRepetition';
-import NextBestLessonCard from '../components/NextBestLessonCard';
-import { pickNextLesson } from '../lib/adaptiveSelector';
-import MVPAnalytics from '../components/MVPAnalytics';
-import { track } from '../lib/analytics';
 import MascotCoach from '../components/MascotCoach';
 
+const tutorialSteps = [
+  {
+    id: 'progress',
+    title: 'This is your home base',
+    message: 'Check your streak, XP, and daily goal at a glance.'
+  },
+  {
+    id: 'cta',
+    title: 'Continue learning',
+    message: 'Tap here any time—Milo will guide you to the next lesson.'
+  },
+  {
+    id: 'actions',
+    title: 'Quick shortcuts',
+    message: 'Jump into a quick practice, review lessons, or view your progress.'
+  },
+  {
+    id: 'coach',
+    title: 'Coach Milo',
+    message: 'I’ll keep you motivated and let you know what to do next!'
+  }
+];
+
 export default function Dashboard() {
-  const { user, lessonProgress, reviewItems, resetDemo, setDailyGoal } = useStore();
-  const [highlightIndex, setHighlightIndex] = useState(-1);
-  const [showGoalModal, setShowGoalModal] = useState(false);
-  const [isPitchMode, setIsPitchMode] = useState(false);
   const navigate = useNavigate();
+  const { user, lessonProgress, onboarding, finishTutorial } = useStore();
+
+  const [tourActive, setTourActive] = useState(onboarding.needsTutorial);
+  const [tourStep, setTourStep] = useState(0);
+
+  const progressRef = useRef(null);
+  const ctaRef = useRef(null);
+  const actionsRef = useRef(null);
+  const coachRef = useRef(null);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const pitchMode = params.get('pitch') === '1';
-    setIsPitchMode(pitchMode);
-    
-    if (pitchMode) {
-      // Looping sequence: streak (1) -> XP (0) -> badges (2)
-      const sequence = [1, 0, 2];
-      let index = 0;
-      
-      const interval = setInterval(() => {
-        setHighlightIndex(sequence[index]);
-        index = (index + 1) % sequence.length; // Loop
-      }, 3000);
-      
-      return () => clearInterval(interval);
+    if (onboarding.needsTutorial) {
+      setTourActive(true);
+      setTourStep(0);
     }
+  }, [onboarding.needsTutorial]);
 
-    // Check for daily goal reminder at 8 PM
-    const checkReminder = () => {
-      const now = new Date();
-      const hour = now.getHours();
-      const today = now.toISOString().split('T')[0];
-      
-      if (hour === 20 && user.lastActiveDate === today && user.dailyXP < user.dailyGoal) {
-        console.log('Reminder: Complete your daily goal!');
-      }
+  useEffect(() => {
+    const handler = () => {
+      setTourActive(true);
+      setTourStep(0);
     };
-    
-    const reminderInterval = setInterval(checkReminder, 60000);
-    return () => clearInterval(reminderInterval);
-  }, [user]);
+    window.addEventListener('casequest:tutorial:replay', handler);
+    return () => window.removeEventListener('casequest:tutorial:replay', handler);
+  }, []);
 
-  const getStreakHeatMap = () => {
-    const today = new Date();
-    const days = [];
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-      const dateStr = date.toISOString().split('T')[0];
-      days.push({
-        date: dateStr,
-        day: date.toLocaleDateString('en-US', { weekday: 'short' }),
-        active: i <= user.streak - 1
-      });
-    }
-    return days;
-  };
+  const modules = useMemo(() => getModuleList(), []);
 
-  const getNextLesson = () => {
-    const modules = getModuleList();
+  const journey = useMemo(() => {
+    let activeModule = modules[0];
+    let activeLesson = null;
+    let completedLessons = 0;
+    let totalLessons = 0;
+
     for (const module of modules) {
       const lessons = getLessonsByModule(module.id);
-      for (const lesson of lessons) {
-        const progress = lessonProgress[lesson.id];
-        if (!progress || progress.status !== 'mastered') {
-          return lesson;
-        }
+      totalLessons = lessons.length;
+      const incomplete = lessons.find((lesson) => {
+        const status = lessonProgress[lesson.id];
+        return !(status && (status.status === 'mastered' || status.crownLevel >= 1));
+      });
+      completedLessons = lessons.filter((lesson) => {
+        const status = lessonProgress[lesson.id];
+        return status && (status.status === 'mastered' || status.crownLevel >= 1);
+      }).length;
+
+      if (incomplete) {
+        activeModule = module;
+        activeLesson = incomplete;
+        break;
       }
     }
-    return null;
-  };
 
-  const getPerformance = () => {
-    const completed = Object.entries(lessonProgress)
-      .filter(([_, p]) => p.crownLevel > 0)
-      .slice(-3);
-    
-    if (completed.length === 0) return null;
+    return {
+      activeModule,
+      activeLesson,
+      completedLessons,
+      totalLessons
+    };
+  }, [lessonProgress, modules]);
 
-    const avgCrowns = completed.reduce((sum, [_, p]) => sum + p.crownLevel, 0) / completed.length;
-    const strengths = [];
-    const weaknesses = [];
+  const dailyGoalProgress = Math.min((user.dailyXP / user.dailyGoal) * 100, 100);
 
-    if (avgCrowns >= 3) strengths.push('Strong mastery');
-    else if (avgCrowns < 2) weaknesses.push('Review fundamentals');
+  const hasStarted = useMemo(() => {
+    return Object.values(lessonProgress).some((progress) => progress && progress.status);
+  }, [lessonProgress]);
 
-    const masteredCount = completed.filter(([_, p]) => p.status === 'mastered').length;
-    if (masteredCount >= 2) strengths.push('Consistent performance');
-    else if (masteredCount === 0) weaknesses.push('Focus on perfection');
+  const coachMessage = useMemo(() => {
+    if (!journey.activeLesson) {
+      return {
+        message: 'You have completed the available lessons—stellar work!',
+        subtext: 'Hop into Quick Practice whenever you want to keep the streak alive.',
+        mood: 'celebrate'
+      };
+    }
+    if (dailyGoalProgress >= 100) {
+      return {
+        message: `You hit today’s goal. Want to bank extra XP on ${journey.activeLesson.title}?`,
+        subtext: 'Even five more minutes keeps momentum going.',
+        mood: 'celebrate'
+      };
+    }
+    return {
+      message: `Next up: ${journey.activeLesson.title}. I’ll walk you through each step.`,
+      subtext: 'Finish one micro-lesson to keep your streak glowing.',
+      mood: 'encourage'
+    };
+  }, [journey.activeLesson, dailyGoalProgress]);
 
-    return { strengths, weaknesses };
-  };
-
-  const lessons = useMemo(() => {
-    const modules = getModuleList();
-    return modules.flatMap(m => getLessonsByModule(m.id));
-  }, []);
-
-  const userRatings = useMemo(() => {
-    try {
-      const raw = localStorage.getItem('casequest-storage');
-      if (!raw) return {};
-      const parsed = JSON.parse(raw);
-      return parsed?.state?.userRatings || {};
-    } catch { return {}; }
-  }, []);
-
-  const { chosen, candidates } = useMemo(
-    () => pickNextLesson({ lessons, userRatings }),
-    [lessons, userRatings]
-  );
-
-  const stats = [
-    { icon: Star, label: 'Total XP', value: user.xp, color: 'text-yellow-500', bg: 'bg-yellow-100' },
-    { icon: Flame, label: 'Streak', value: `${user.streak} days`, color: 'text-orange-500', bg: 'bg-orange-100' },
-    { icon: Trophy, label: 'Badges', value: user.badges.length, color: 'text-purple-500', bg: 'bg-purple-100' },
-    { icon: Target, label: 'Level', value: Math.floor(user.xp / 100) + 1, color: 'text-indigo-500', bg: 'bg-indigo-100' }
+  const quickActions = [
+    {
+      title: 'Quick practice',
+      description: '2-minute market sizing drill.',
+      icon: <Zap className="w-5 h-5" />,
+      onClick: () => navigate('/lesson/ms1')
+    },
+    {
+      title: 'Review lessons',
+      description: 'Refresh what you already learned.',
+      icon: <Repeat className="w-5 h-5" />,
+      onClick: () => navigate('/learn')
+    },
+    {
+      title: 'See progress',
+      description: 'Your streak, XP, and milestones.',
+      icon: <BarChart3 className="w-5 h-5" />,
+      onClick: () => navigate('/progress')
+    }
   ];
 
-  const streakDays = getStreakHeatMap();
-  const nextLesson = getNextLesson();
-  const performance = getPerformance();
-  const dueReviews = getDueItems(reviewItems);
-  const dailyProgress = Math.min((user.dailyXP / user.dailyGoal) * 100, 100);
-  const coachMessage = useMemo(() => {
-    const options = [
-      `Great to see you, ${user.name}! Keep that strategy muscle sharp.`,
-      `Your streak of ${user.streak} is pure consultant discipline. One more lesson?`,
-      `${user.badges.length ? 'Those badges look shiny!' : 'Let’s snag your first badge today.'} Ready for a quick market sizing win?`
-    ];
-    return options[user.xp % options.length];
-  }, [user.name, user.streak, user.badges.length, user.xp]);
+  const handleContinue = () => {
+    if (journey.activeLesson) {
+      navigate(`/lesson/${journey.activeLesson.id}`);
+    } else {
+      navigate('/learn');
+    }
+  };
+
+  const advanceTour = () => {
+    if (tourStep >= tutorialSteps.length - 1) {
+      setTourActive(false);
+      finishTutorial();
+    } else {
+      setTourStep((prev) => prev + 1);
+    }
+  };
+
+  const highlight = tutorialSteps[tourStep]?.id;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
-      <div className="max-w-6xl mx-auto p-4">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h2 className="text-3xl font-bold">Welcome back, {user.name}! 👋</h2>
-            <p className="text-gray-600">Keep up the great work</p>
+    <div className="min-h-screen px-4 pt-8 pb-24 bg-gradient-to-br from-slate-50 via-white to-indigo-100">
+      <div className="max-w-3xl mx-auto space-y-6">
+        <motion.section
+          ref={progressRef}
+          animate={{ scale: tourActive && highlight === 'progress' ? 1.02 : 1 }}
+          className={`relative rounded-3xl bg-white shadow-xl border ${
+            tourActive && highlight === 'progress'
+              ? 'border-indigo-400 ring-4 ring-indigo-200 z-50'
+              : 'border-indigo-100'
+          } p-6`}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-wide text-gray-500">Welcome back</p>
+              <h1 className="text-2xl font-semibold text-gray-900">Hi {user.name}! 👋</h1>
+            </div>
+            <div className="text-right text-sm text-indigo-500 font-medium flex items-center gap-2">
+              <Flame className="w-4 h-4" />
+              {user.streak}-day streak
+            </div>
           </div>
-          {!isPitchMode && (
-            <button
-              onClick={resetDemo}
-              className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 border border-gray-300 px-3 py-1.5 rounded-lg bg-white"
-            >
-              <RotateCcw className="w-4 h-4" />
-              Reset Demo
-            </button>
+          <div className="mt-4 space-y-2">
+            <div className="flex items-center justify-between text-xs text-gray-500">
+              <span>Daily goal</span>
+              <span>{user.dailyXP}/{user.dailyGoal} XP</span>
+            </div>
+            <div className="h-2 w-full rounded-full bg-gray-200 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-500"
+                style={{ width: `${dailyGoalProgress}%` }}
+              />
+            </div>
+          </div>
+        </motion.section>
+
+        <motion.section
+          ref={ctaRef}
+          animate={{ scale: tourActive && highlight === 'cta' ? 1.02 : 1 }}
+          className={`relative rounded-3xl bg-gradient-to-br from-indigo-600 via-indigo-500 to-purple-500 text-white shadow-xl p-6 ${
+            tourActive && highlight === 'cta' ? 'ring-4 ring-indigo-200 z-50' : ''
+          }`}
+        >
+          <p className="text-xs uppercase tracking-wide text-indigo-100">Next lesson</p>
+          <h2 className="text-2xl font-semibold mt-1">
+            {journey.activeModule ? journey.activeModule.title : 'All modules complete!'}
+          </h2>
+          {journey.activeLesson && (
+            <p className="text-indigo-100 text-sm mt-2">
+              {journey.completedLessons}/{journey.totalLessons} lessons complete · Up next: {journey.activeLesson.title}
+            </p>
           )}
-        </div>
+          <button
+            type="button"
+            onClick={handleContinue}
+            className="mt-6 w-full inline-flex items-center justify-center gap-3 px-6 py-4 text-lg font-semibold bg-white text-indigo-600 rounded-2xl shadow-lg hover:bg-indigo-50"
+          >
+            {hasStarted ? 'Continue learning' : 'Start your first lesson'}
+            <ArrowRight className="w-5 h-5" />
+          </button>
+        </motion.section>
 
-        {/* Daily Goal Progress */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-xl p-6 shadow-sm mb-6"
+        <motion.section
+          ref={actionsRef}
+          animate={{ scale: tourActive && highlight === 'actions' ? 1.02 : 1 }}
+          className={`relative grid grid-cols-1 md:grid-cols-3 gap-3 ${
+            tourActive && highlight === 'actions'
+              ? 'ring-4 ring-indigo-200 rounded-3xl bg-white p-2 shadow-lg z-50'
+              : ''
+          }`}
         >
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <h3 className="text-lg font-semibold">Daily Goal</h3>
-              <p className="text-sm text-gray-600">
-                {user.dailyXP} / {user.dailyGoal} XP
-              </p>
-            </div>
-            {!isPitchMode && (
-              <button
-                onClick={() => setShowGoalModal(true)}
-                className="text-indigo-600 hover:text-indigo-700"
-              >
-                <Settings className="w-5 h-5" />
-              </button>
-            )}
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${dailyProgress}%` }}
-              transition={{ duration: 0.5 }}
-              className="bg-gradient-to-r from-indigo-500 to-purple-500 h-full rounded-full"
-            />
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-          className="mb-6"
-        >
-          <MascotCoach
-            message={coachMessage}
-            subtext="Coach Milo is always on standby if you need a hint or a reset."
-            footer="Tip: Investors love seeing the Market Sizing demo."
-          />
-        </motion.div>
-
-        {/* Market Sizing Spotlight */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.08 }}
-          className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 rounded-2xl p-6 text-white shadow-lg mb-6"
-        >
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2 uppercase text-xs tracking-wide text-indigo-100 mb-2">
-                <Sparkles className="w-4 h-4" />
-                Featured MVP Flow
-              </div>
-              <h3 className="text-2xl font-semibold mb-1">Market Sizing Masterclass</h3>
-              <p className="text-indigo-100 text-sm max-w-xl">
-                Learn top-down and bottom-up sizing, then tackle a voice-enabled practice case with instant feedback. Perfect highlight for investor demos.
-              </p>
-            </div>
-            <Link
-              to="/market-sizing"
-              onClick={() => track('market_sizing_card_clicked')}
-              className="inline-flex items-center gap-2 bg-white text-indigo-700 px-5 py-3 rounded-xl font-semibold shadow-sm hover:bg-indigo-50"
+          {quickActions.map((action) => (
+            <button
+              key={action.title}
+              type="button"
+              onClick={action.onClick}
+              className="rounded-2xl bg-white shadow-sm border border-gray-100 p-4 text-left hover:border-indigo-200 hover:shadow-md transition"
             >
-              Launch Module
-              <ArrowRight className="w-5 h-5" />
-            </Link>
-          </div>
-        </motion.div>
-
-        {/* Next Best Lesson */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="mb-6"
-        >
-          <NextBestLessonCard
-            candidates={candidates}
-            selectedId={chosen?.id}
-            onGo={(id) => navigate(`/lesson/${id}`)}
-          />
-        </motion.div>
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          {stats.map((stat, index) => (
-            <motion.div
-              key={stat.label}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ 
-                opacity: 1, 
-                y: 0,
-                scale: highlightIndex === index ? 1.1 : 1,
-                boxShadow: highlightIndex === index 
-                  ? '0 20px 40px rgba(99, 102, 241, 0.4)' 
-                  : '0 1px 3px rgba(0,0,0,0.1)'
-              }}
-              transition={{ 
-                delay: index * 0.1,
-                scale: { duration: 0.3 },
-                boxShadow: { duration: 0.3 }
-              }}
-              className="bg-white rounded-xl p-4 shadow-sm"
-            >
-              <div className={`${stat.bg} ${stat.color} w-12 h-12 rounded-lg flex items-center justify-center mb-3`}>
-                <stat.icon className="w-6 h-6" />
+              <div className="flex items-center gap-3 text-indigo-600 font-medium">
+                {action.icon}
+                {action.title}
               </div>
-              <p className="text-sm text-gray-600">{stat.label}</p>
-              <p className="text-2xl font-bold">{stat.value}</p>
-            </motion.div>
+              <p className="text-sm text-gray-600 mt-2 leading-relaxed">{action.description}</p>
+            </button>
           ))}
+        </motion.section>
+
+        <div ref={coachRef} className={tourActive && highlight === 'coach' ? 'relative z-50' : 'relative'}>
+          <MascotCoach
+            message={coachMessage.message}
+            subtext={coachMessage.subtext}
+            mood={coachMessage.mood}
+          />
         </div>
-
-        {/* Streak with Freeze */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="bg-white rounded-xl p-6 shadow-sm mb-6"
-        >
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <h3 className="text-lg font-semibold">Your Streak</h3>
-              {user.streakFreezeAvailable && (
-                <div className="flex items-center gap-1 bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-semibold">
-                  <Shield className="w-3 h-3" />
-                  Freeze Available
-                </div>
-              )}
-            </div>
-            <div className="flex items-center gap-2 text-orange-500">
-              <Flame className="w-5 h-5" fill="currentColor" />
-              <span className="font-bold">{user.streak} days</span>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            {streakDays.map((day, i) => (
-              <div key={i} className="flex-1 text-center">
-                <div className={`h-12 rounded-lg mb-2 ${
-                  day.active ? 'bg-orange-500' : 'bg-gray-200'
-                }`} />
-                <p className="text-xs text-gray-600">{day.day}</p>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-
-        {/* Badges */}
-        {user.badges.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="bg-white rounded-xl p-6 shadow-sm mb-6"
-          >
-            <h3 className="text-lg font-semibold mb-4">Your Badges</h3>
-            <div className="grid grid-cols-4 md:grid-cols-8 gap-4">
-              {user.badges.map((badge, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ delay: 0.6 + i * 0.1 }}
-                  className="text-5xl text-center"
-                >
-                  {badge}
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-
-        {/* Performance */}
-        {performance && (performance.strengths.length > 0 || performance.weaknesses.length > 0) && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7 }}
-            className="bg-white rounded-xl p-6 shadow-sm mb-6"
-          >
-            <h3 className="text-lg font-semibold mb-4">Performance Insights</h3>
-            <div className="flex flex-wrap gap-2">
-              {performance.strengths.map((strength, i) => (
-                <div key={i} className="flex items-center gap-2 bg-green-50 text-green-700 px-3 py-2 rounded-lg">
-                  <TrendingUp className="w-4 h-4" />
-                  <span className="text-sm font-medium">{strength}</span>
-                </div>
-              ))}
-              {performance.weaknesses.map((weakness, i) => (
-                <div key={i} className="flex items-center gap-2 bg-orange-50 text-orange-700 px-3 py-2 rounded-lg">
-                  <TrendingDown className="w-4 h-4" />
-                  <span className="text-sm font-medium">{weakness}</span>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-
-        {/* Continue Learning */}
-        {nextLesson && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8 }}
-            className="bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl p-6 text-white shadow-lg mb-6"
-          >
-            <h3 className="text-xl font-semibold mb-2">Continue Learning</h3>
-            <p className="mb-4 text-indigo-100">Pick up where you left off</p>
-            <Link
-              to={`/lesson/${nextLesson.id}`}
-              className="inline-flex items-center gap-2 bg-white text-indigo-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition"
-            >
-              {nextLesson.title}
-              <ArrowRight className="w-5 h-5" />
-            </Link>
-          </motion.div>
-        )}
-
-        {/* Review Banner */}
-        {dueReviews.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.9 }}
-            className="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-4"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <RotateCcw className="w-6 h-6 text-blue-600" />
-                <div>
-                  <h4 className="font-semibold text-blue-900">Review Time!</h4>
-                  <p className="text-sm text-blue-700">{dueReviews.length} items ready for review</p>
-                </div>
-              </div>
-              <button
-                onClick={() => navigate('/review')}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700"
-              >
-                Start Review
-              </button>
-            </div>
-          </motion.div>
-        )}
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1 }}
-          className="mt-6"
-        >
-          <MVPAnalytics />
-        </motion.div>
-
-        {/* Daily Goal Modal */}
-        {showGoalModal && !isPitchMode && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowGoalModal(false)}>
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-white rounded-2xl p-6 max-w-sm w-full"
-            >
-              <h3 className="text-xl font-bold mb-4">Set Daily Goal</h3>
-              <p className="text-sm text-gray-600 mb-4">Choose your daily XP target</p>
-              <div className="space-y-2">
-                {[10, 20, 30, 50].map((goal) => (
-                  <button
-                    key={goal}
-                    onClick={() => {
-                      setDailyGoal(goal);
-                      setShowGoalModal(false);
-                    }}
-                    className={`w-full p-3 rounded-lg border-2 transition ${
-                      user.dailyGoal === goal
-                        ? 'border-indigo-500 bg-indigo-50'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <span className="font-semibold">{goal} XP</span>
-                    <span className="text-sm text-gray-600 ml-2">
-                      ({Math.ceil(goal / 30)} lessons)
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </motion.div>
-          </div>
-        )}
       </div>
+
+      <AnimatePresence>
+        {tourActive && (
+          <motion.div
+            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm flex items-end md:items-center justify-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div className="absolute inset-0" onClick={advanceTour} />
+            <motion.div
+              key={tourStep}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 30 }}
+              transition={{ type: 'spring', stiffness: 200, damping: 20 }}
+              className="relative z-50 max-w-sm w-full mx-4 mb-12 md:mb-0 bg-white rounded-2xl shadow-2xl p-6"
+            >
+              <div className="text-sm text-indigo-500 font-semibold mb-1">
+                Step {tourStep + 1} of {tutorialSteps.length}
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900">{tutorialSteps[tourStep].title}</h3>
+              <p className="text-sm text-gray-600 mt-2">{tutorialSteps[tourStep].message}</p>
+              <button
+                type="button"
+                onClick={advanceTour}
+                className="mt-4 inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700"
+              >
+                {tourStep === tutorialSteps.length - 1 ? 'Let’s start learning!' : 'Got it!'}
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

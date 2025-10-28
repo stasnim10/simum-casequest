@@ -39,11 +39,31 @@ export default function VoiceBar({ onFinalTranscript, onPartial, onCancel, onCom
       setActive(false);
     };
     recognitionRef.current = r;
-    return () => { try { r.stop(); } catch {} };
+    return () => {
+      try {
+        r.stop();
+      } catch (err) {
+        console.debug('Speech recognition stop failed', err);
+      }
+    };
   }, [finals, onFinalTranscript, onPartial]);
 
-  const start = () => { try { recognitionRef.current?.start(); setActive(true); } catch {} };
-  const stop  = () => { try { recognitionRef.current?.stop();  setActive(false); } catch {} };
+  const start = () => {
+    try {
+      recognitionRef.current?.start();
+      setActive(true);
+    } catch (err) {
+      console.debug('Speech recognition start failed', err);
+    }
+  };
+  const stop  = () => {
+    try {
+      recognitionRef.current?.stop();
+      setActive(false);
+    } catch (err) {
+      console.debug('Speech recognition stop failed', err);
+    }
+  };
   
   const startEdit = () => {
     setEditText(finals.join(' ').trim());

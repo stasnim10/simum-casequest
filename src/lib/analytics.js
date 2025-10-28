@@ -1,5 +1,3 @@
-let ready = false;
-
 export function initAnalytics(key, host = 'https://app.posthog.com') {
   if (!key) {
     console.warn('PostHog disabled: missing key');
@@ -8,7 +6,6 @@ export function initAnalytics(key, host = 'https://app.posthog.com') {
   import('posthog-js').then(({ default: posthog }) => {
     posthog.init(key, { api_host: host, capture_pageview: true });
     window.posthog = posthog;
-    ready = true;
     console.log('PostHog initialized');
   }).catch(err => console.error('PostHog init failed', err));
 }

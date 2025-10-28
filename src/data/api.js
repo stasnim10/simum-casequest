@@ -1,5 +1,6 @@
 import { modules, lessons } from './seed.js';
 import { cases } from './cases.js';
+import { getSimulatorCases, getSimulatorCaseBySlug } from './simulatorCases.js';
 
 export const getModuleList = () => {
   return modules;
@@ -23,4 +24,12 @@ export const getCaseById = (id) => {
 
 export const getAllCases = () => {
   return cases;
+};
+
+export const getAllSimulatorCases = () => {
+  return getSimulatorCases();
+};
+
+export const getSimulatorCase = (slug) => {
+  return getSimulatorCaseBySlug(slug);
 };

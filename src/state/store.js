@@ -22,6 +22,12 @@ const useStore = create(
       lessonProgress: {},
       streakHistory: {},
       reviewItems: {}, // { questionId: { lessonId, questionData, nextReview, intervalIndex, lastQuality } }
+      onboarding: {
+        completed: false,
+        goal: null,
+        learningStyle: null,
+        needsTutorial: false
+      },
       marketSizing: {
         introSeen: false,
         lessonStatus: {
@@ -96,6 +102,44 @@ const useStore = create(
           badges: [...new Set([...state.user.badges, id])]
         }
       })),
+
+      setOnboardingGoal: (goal) => {
+        set((state) => ({
+          onboarding: {
+            ...state.onboarding,
+            goal
+          }
+        }));
+      },
+
+      setOnboardingStyle: (learningStyle) => {
+        set((state) => ({
+          onboarding: {
+            ...state.onboarding,
+            learningStyle
+          }
+        }));
+      },
+
+      completeOnboarding: ({ goal, learningStyle }) => {
+        set((state) => ({
+          onboarding: {
+            completed: true,
+            goal: goal ?? state.onboarding.goal,
+            learningStyle: learningStyle ?? state.onboarding.learningStyle,
+            needsTutorial: true
+          }
+        }));
+      },
+
+      finishTutorial: () => {
+        set((state) => ({
+          onboarding: {
+            ...state.onboarding,
+            needsTutorial: false
+          }
+        }));
+      },
 
       startLesson: (id) => set((state) => ({
         lessonProgress: {
@@ -265,6 +309,12 @@ const useStore = create(
           lessonProgress: {},
           streakHistory: {},
           reviewItems: {},
+          onboarding: {
+            completed: false,
+            goal: null,
+            learningStyle: null,
+            needsTutorial: false
+          },
           marketSizing: {
             introSeen: false,
             lessonStatus: {
@@ -288,6 +338,7 @@ const useStore = create(
         lessonProgress: state.lessonProgress,
         streakHistory: state.streakHistory,
         reviewItems: state.reviewItems,
+        onboarding: state.onboarding,
         marketSizing: state.marketSizing
       })
     }

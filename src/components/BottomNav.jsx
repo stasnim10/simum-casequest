@@ -1,13 +1,11 @@
 import { NavLink } from 'react-router-dom';
-import { BookOpen, Briefcase, RotateCcw, LayoutDashboard, Trophy } from 'lucide-react';
+import { Home, BookOpen, BarChart3 } from 'lucide-react';
 
 export default function BottomNav() {
   const links = [
+    { to: '/dashboard', icon: Home, label: 'Home' },
     { to: '/learn', icon: BookOpen, label: 'Learn' },
-    { to: '/case', icon: Briefcase, label: 'Case' },
-    { to: '/review', icon: RotateCcw, label: 'Review' },
-    { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-    { to: '/leaderboard', icon: Trophy, label: 'Leaderboard' }
+    { to: '/progress', icon: BarChart3, label: 'Progress' }
   ];
 
   return (

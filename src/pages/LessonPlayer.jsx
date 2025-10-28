@@ -5,28 +5,39 @@ import { ArrowLeft, CheckCircle, XCircle, Star, Crown, Flame } from 'lucide-reac
 import useStore from '../state/store';
 import { getLesson } from '../data/api';
 import { track } from '../lib/analytics';
+import MicroLesson from '../components/MicroLesson';
 
 export default function LessonPlayer() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { startLesson, completeLesson, lessonProgress, user } = useStore();
+  const startLesson = useStore((state) => state.startLesson);
+  const completeLesson = useStore((state) => state.completeLesson);
+  const lessonProgress = useStore((state) => state.lessonProgress);
+  const user = useStore((state) => state.user);
+  const lesson = getLesson(id);
+  const isMicro = Boolean(lesson?.microLesson);
+
   const [stage, setStage] = useState('concept'); // concept | quiz | results
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState({});
   const [feedback, setFeedback] = useState({});
   const [results, setResults] = useState(null);
-  
-  const lesson = getLesson(id);
+
+  useEffect(() => setStage('concept'), [id]);
+
+  useEffect(() => {
+    if (!lesson || isMicro) return;
+    startLesson(id);
+    track('lesson_started', { lessonId: id, title: lesson.title });
+  }, [id, lesson, startLesson, isMicro]);
+
+  if (isMicro) {
+    return <MicroLesson lesson={lesson} lessonId={id} />;
+  }
+
   const progress = lessonProgress[id];
   const prevXP = user.xp;
   const prevCrownLevel = progress?.crownLevel || 0;
-
-  useEffect(() => {
-    if (lesson) {
-      startLesson(id);
-      track('lesson_started', { lessonId: id, title: lesson.title });
-    }
-  }, [id, lesson, startLesson]);
 
   if (!lesson) {
     return (

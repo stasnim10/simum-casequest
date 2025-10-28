@@ -10,13 +10,17 @@ export function ensureSeededOnce(opts = {}) {
     try {
       localStorage.removeItem(flagKey);
       localStorage.removeItem(storeKey);
-    } catch {}
+    } catch (err) {
+      console.warn('Failed to clear seed flags', err);
+    }
   }
 
   let existing = null;
   try {
     existing = JSON.parse(localStorage.getItem(storeKey) || 'null');
-  } catch {}
+  } catch (err) {
+    console.warn('Failed to parse existing seed data', err);
+  }
 
   const hasUser = !!(existing && existing.state && existing.state.user && existing.state.user.id);
   if (!forceReset && hasUser) return false;
@@ -46,7 +50,9 @@ export function ensureSeededOnce(opts = {}) {
   try {
     localStorage.setItem(storeKey, JSON.stringify(sample));
     localStorage.setItem(flagKey, '1');
-  } catch {}
+  } catch (err) {
+    console.error('Failed to write seed data', err);
+  }
 
   if (params.get('demo') === '1') {
     params.delete('demo');
