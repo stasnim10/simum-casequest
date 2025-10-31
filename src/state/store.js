@@ -1,18 +1,60 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { calculateNextReview } from '../services/spacedRepetition';
+import { modules } from '../data/seed';
+
+const normalizeUser = (user = {}) => ({
+  ...user,
+  dailyGoal: user?.dailyGoal && user.dailyGoal > 0 ? user.dailyGoal : 20
+});
 
 const defaultUser = {
   id: 'demo',
   name: 'Demo',
   xp: 0,
   streak: 0,
-  coins: 0,
   badges: [],
   dailyGoal: 20,
   dailyXP: 0,
-  lastActiveDate: null,
-  streakFreezeAvailable: true
+  lastActiveDate: null
+};
+
+const orderedLessonIds = modules.flatMap((module) => module.lessons);
+
+const defaultProgressEntry = () => ({
+  status: 'in_progress',
+  contentComplete: false,
+  quizScore: null,
+  quizPassed: false,
+  attempts: 0,
+  completedAt: null,
+  quizLastTriedAt: null,
+  totalQuestions: null
+});
+
+const defaultQuizStats = () => ({
+  totalAttempts: 0,
+  totalPassed: 0,
+  totalQuestions: 0,
+  totalCorrect: 0
+});
+
+const QUIZ_INSIGHTS_KEY = 'quiz-insights';
+const QUIZ_INSIGHTS_LIMIT = 200;
+
+const appendQuizInsight = (entry) => {
+  if (typeof window === 'undefined') return;
+  try {
+    const raw = window.localStorage.getItem(QUIZ_INSIGHTS_KEY);
+    const parsedRaw = raw ? JSON.parse(raw) : [];
+    const insights = Array.isArray(parsedRaw) ? parsedRaw : [];
+    insights.push(entry);
+    if (insights.length > QUIZ_INSIGHTS_LIMIT) {
+      insights.splice(0, insights.length - QUIZ_INSIGHTS_LIMIT);
+    }
+    window.localStorage.setItem(QUIZ_INSIGHTS_KEY, JSON.stringify(insights));
+  } catch (error) {
+    console.warn('Failed to log quiz insight', error);
+  }
 };
 
 const useStore = create(
@@ -21,42 +63,30 @@ const useStore = create(
       user: defaultUser,
       lessonProgress: {},
       streakHistory: {},
-      reviewItems: {}, // { questionId: { lessonId, questionData, nextReview, intervalIndex, lastQuality } }
-      onboarding: {
-        completed: false,
-        goal: null,
-        learningStyle: null,
-        needsTutorial: false
-      },
-      marketSizing: {
-        introSeen: false,
-        lessonStatus: {
-          lesson1: { completed: false, score: null },
-          lesson2: { completed: false, score: null },
-          lesson3: { completed: false, score: null }
-        },
-        practiceAttempts: [],
-        hintsUsed: 0,
-        feedbackShown: 0,
-        reviewCount: 0,
-        masteryUnlocked: false
-      },
+      quizStats: defaultQuizStats(),
 
-      setUser: (user) => set({ user }),
-      
-      setDailyGoal: (goal) => set((state) => ({
-        user: { ...state.user, dailyGoal: goal }
-      })),
+      setUser: (user) => set({ user: normalizeUser(user) }),
+
+      resetProgress: () =>
+        set({
+          lessonProgress: {},
+          streakHistory: {},
+          quizStats: defaultQuizStats(),
+          user: normalizeUser(get().user)
+        }),
+
+      setDailyGoal: (goal) =>
+        set((state) => ({
+          user: { ...state.user, dailyGoal: goal }
+        })),
 
       addXP: (amount) => {
         const today = new Date().toISOString().split('T')[0];
         set((state) => ({
-          user: { 
-            ...state.user, 
+          user: {
+            ...state.user,
             xp: state.user.xp + amount,
-            dailyXP: state.user.lastActiveDate === today 
-              ? state.user.dailyXP + amount 
-              : amount,
+            dailyXP: state.user.lastActiveDate === today ? state.user.dailyXP + amount : amount,
             lastActiveDate: today
           }
         }));
@@ -65,282 +95,163 @@ const useStore = create(
       incrementStreakIfFirstCompletionToday: () => {
         const today = new Date().toISOString().split('T')[0];
         const { streakHistory, user } = get();
-        
+
         if (!streakHistory[today]) {
           const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
           const hadYesterday = streakHistory[yesterday];
-          
-          let newStreak = user.streak;
-          let freezeUsed = false;
-          
-          if (hadYesterday) {
-            // Continue streak
-            newStreak = user.streak + 1;
-          } else if (user.streak > 0 && user.streakFreezeAvailable) {
-            // Use freeze to maintain streak
-            newStreak = user.streak;
-            freezeUsed = true;
-          } else {
-            // Start new streak
-            newStreak = 1;
-          }
-          
+          const newStreak = hadYesterday ? user.streak + 1 : 1;
+
           set({
-            user: { 
-              ...user, 
-              streak: newStreak,
-              streakFreezeAvailable: freezeUsed ? false : user.streakFreezeAvailable
+            user: {
+              ...user,
+              streak: newStreak
             },
             streakHistory: { ...streakHistory, [today]: true }
           });
         }
       },
 
-      addBadge: (id) => set((state) => ({
-        user: { 
-          ...state.user, 
-          badges: [...new Set([...state.user.badges, id])]
-        }
-      })),
-
-      setOnboardingGoal: (goal) => {
-        set((state) => ({
-          onboarding: {
-            ...state.onboarding,
-            goal
+      startLesson: (id) =>
+        set((state) => {
+          if (state.lessonProgress[id]) {
+            return state;
           }
-        }));
-      },
+          return {
+            lessonProgress: {
+              ...state.lessonProgress,
+              [id]: defaultProgressEntry()
+            }
+          };
+        }),
 
-      setOnboardingStyle: (learningStyle) => {
-        set((state) => ({
-          onboarding: {
-            ...state.onboarding,
-            learningStyle
-          }
-        }));
-      },
+      markLessonContentComplete: (id) =>
+        set((state) => {
+          const existing = state.lessonProgress[id] || defaultProgressEntry();
+          return {
+            lessonProgress: {
+              ...state.lessonProgress,
+              [id]: {
+                ...existing,
+                contentComplete: true
+              }
+            }
+          };
+        }),
 
-      completeOnboarding: ({ goal, learningStyle }) => {
-        set((state) => ({
-          onboarding: {
-            completed: true,
-            goal: goal ?? state.onboarding.goal,
-            learningStyle: learningStyle ?? state.onboarding.learningStyle,
-            needsTutorial: true
-          }
-        }));
-      },
-
-      finishTutorial: () => {
-        set((state) => ({
-          onboarding: {
-            ...state.onboarding,
-            needsTutorial: false
-          }
-        }));
-      },
-
-      startLesson: (id) => set((state) => ({
-        lessonProgress: {
-          ...state.lessonProgress,
-          [id]: state.lessonProgress[id] || { 
-            status: 'in_progress', 
-            crownLevel: 0 
-          }
-        }
-      })),
-
-      completeLesson: (id, { correct, total }) => {
-        const { lessonProgress, user } = get();
-        const current = lessonProgress[id] || { status: 'new', crownLevel: 0 };
-        
-        // Calculate XP
-        const correctXP = correct * 10;
-        const completionBonus = 20;
-        const totalXP = correctXP + completionBonus;
-        
-        // Update crown level if perfect
-        const isPerfect = correct === total;
-        const newCrownLevel = isPerfect 
-          ? Math.min(current.crownLevel + 1, 5) 
-          : current.crownLevel;
-        
-        // Determine status
-        const newStatus = newCrownLevel >= 3 ? 'mastered' : 'in_progress';
-        
+      completeLesson: (id) => {
         const today = new Date().toISOString().split('T')[0];
-        
+        const { lessonProgress } = get();
+        const existing = lessonProgress[id] || defaultProgressEntry();
+        const alreadyCompleted = existing.status === 'completed';
+
         set({
-          user: { 
-            ...user, 
-            xp: user.xp + totalXP,
-            dailyXP: user.lastActiveDate === today 
-              ? user.dailyXP + totalXP 
-              : totalXP,
-            lastActiveDate: today
-          },
           lessonProgress: {
             ...lessonProgress,
             [id]: {
-              status: newStatus,
-              crownLevel: newCrownLevel
+              ...existing,
+              status: 'completed',
+              completedAt: today,
+              quizPassed: true
             }
           }
         });
-        
-        // Update streak
-        get().incrementStreakIfFirstCompletionToday();
+
+        if (!alreadyCompleted && !existing.quizPassed) {
+          get().addXP(5);
+          get().incrementStreakIfFirstCompletionToday();
+        }
       },
 
-      addReviewItem: (questionId, lessonId, questionData) => {
-        const { nextReviewDate, intervalIndex } = calculateNextReview(3, 0);
-        
-        set((state) => ({
-          reviewItems: {
-            ...state.reviewItems,
-            [questionId]: {
-              lessonId,
-              questionData,
-              nextReview: nextReviewDate,
-              intervalIndex,
-              lastQuality: 3
-            }
-          }
-        }));
-      },
+      submitQuizAttempt: (id, { score, totalQuestions }) => {
+        const { lessonProgress } = get();
+        const quizStats = get().quizStats || defaultQuizStats();
+        const existing = lessonProgress[id] || defaultProgressEntry();
+        const attempts = (existing.attempts || 0) + 1;
+        const passed = totalQuestions > 0 ? score / totalQuestions >= 0.7 : false;
+        const today = new Date().toISOString().split('T')[0];
+        const alreadyEarnedXP = Boolean(existing.completedAt);
+        const safeScore = Number.isFinite(score) ? score : 0;
+        const safeTotal = Number.isFinite(totalQuestions) ? totalQuestions : 0;
+        const updatedQuizPassed = passed || existing.quizPassed;
+        const newCompletedAt = updatedQuizPassed ? (existing.completedAt || (passed ? today : existing.completedAt)) : existing.completedAt;
+        const nextStatus = updatedQuizPassed ? 'completed' : 'in_progress';
 
-      updateReviewItem: (questionId, quality) => {
-        const { reviewItems } = get();
-        const item = reviewItems[questionId];
-        
-        if (!item) return;
-        
-        const { nextReviewDate, intervalIndex } = calculateNextReview(
-          quality, 
-          item.intervalIndex
-        );
-        
+        const updatedStats = {
+          totalAttempts: quizStats.totalAttempts + 1,
+          totalPassed: quizStats.totalPassed + (passed && !alreadyEarnedXP ? 1 : 0),
+          totalQuestions: quizStats.totalQuestions + safeTotal,
+          totalCorrect: quizStats.totalCorrect + safeScore
+        };
+
         set({
-          reviewItems: {
-            ...reviewItems,
-            [questionId]: {
-              ...item,
-              nextReview: nextReviewDate,
-              intervalIndex,
-              lastQuality: quality
+          lessonProgress: {
+            ...lessonProgress,
+            [id]: {
+              ...existing,
+              status: nextStatus,
+              completedAt: newCompletedAt,
+              contentComplete: true,
+              quizScore: safeScore,
+              quizPassed: updatedQuizPassed,
+              attempts,
+              totalQuestions: safeTotal,
+              quizLastTriedAt: today
             }
-          }
-        });
-      },
-
-      markMarketIntro: () => {
-        set((state) => ({
-          marketSizing: {
-            ...state.marketSizing,
-            introSeen: true
-          }
-        }));
-      },
-
-      completeMarketLesson: (lessonKey, { score }) => {
-        set((state) => ({
-          marketSizing: {
-            ...state.marketSizing,
-            lessonStatus: {
-              ...state.marketSizing.lessonStatus,
-              [lessonKey]: { completed: true, score }
-            }
-          }
-        }));
-      },
-
-      recordMarketHint: () => {
-        set((state) => ({
-          marketSizing: {
-            ...state.marketSizing,
-            hintsUsed: state.marketSizing.hintsUsed + 1
-          }
-        }));
-      },
-
-      recordMarketFeedback: () => {
-        set((state) => ({
-          marketSizing: {
-            ...state.marketSizing,
-            feedbackShown: state.marketSizing.feedbackShown + 1
-          }
-        }));
-      },
-
-      saveMarketAttempt: (attempt) => {
-        const { marketSizing } = get();
-        const nextAttempts = [attempt, ...marketSizing.practiceAttempts].slice(0, 10);
-        set({
-          marketSizing: {
-            ...marketSizing,
-            practiceAttempts: nextAttempts
-          }
-        });
-      },
-
-      recordMarketReview: () => {
-        set((state) => ({
-          marketSizing: {
-            ...state.marketSizing,
-            reviewCount: state.marketSizing.reviewCount + 1
-          }
-        }));
-      },
-
-      unlockMarketMastery: () => {
-        set((state) => ({
-          marketSizing: {
-            ...state.marketSizing,
-            masteryUnlocked: true
-          }
-        }));
-      },
-
-      resetDemo: () => {
-        localStorage.removeItem('casequest-storage');
-        set({
-          user: defaultUser,
-          lessonProgress: {},
-          streakHistory: {},
-          reviewItems: {},
-          onboarding: {
-            completed: false,
-            goal: null,
-            learningStyle: null,
-            needsTutorial: false
           },
-          marketSizing: {
-            introSeen: false,
-            lessonStatus: {
-              lesson1: { completed: false, score: null },
-              lesson2: { completed: false, score: null },
-              lesson3: { completed: false, score: null }
-            },
-            practiceAttempts: [],
-            hintsUsed: 0,
-            feedbackShown: 0,
-            reviewCount: 0,
-            masteryUnlocked: false
-          }
+          quizStats: updatedStats
         });
+
+        if (passed && !alreadyEarnedXP) {
+          get().addXP(5);
+          get().incrementStreakIfFirstCompletionToday();
+        }
+      },
+
+      retryQuiz: (id) =>
+        set((state) => {
+          const existing = state.lessonProgress[id];
+          if (!existing) return state;
+          return {
+            lessonProgress: {
+              ...state.lessonProgress,
+              [id]: {
+                ...existing,
+                quizScore: null,
+                quizPassed: existing.quizPassed,
+                totalQuestions: existing.totalQuestions,
+                status: existing.status === 'completed' ? 'completed' : 'in_progress'
+              }
+            }
+          };
+        }),
+
+      logQuizMistake: (payload) => {
+        appendQuizInsight({
+          ...payload,
+          occurredAt: new Date().toISOString()
+        });
+        // TODO: Build insights dashboard showing most-missed topics.
+      },
+
+      getNextLessonId: () => {
+        const progress = get().lessonProgress;
+        for (const lessonId of orderedLessonIds) {
+          if (!progress[lessonId] || progress[lessonId].status !== 'completed') {
+            return lessonId;
+          }
+        }
+        return null;
       }
     }),
-    { 
+    {
       name: 'casequest-storage',
       partialize: (state) => ({
         user: state.user,
         lessonProgress: state.lessonProgress,
         streakHistory: state.streakHistory,
-        reviewItems: state.reviewItems,
-        onboarding: state.onboarding,
-        marketSizing: state.marketSizing
-      })
+        quizStats: state.quizStats
+      }),
+      merge: undefined
     }
   )
 );

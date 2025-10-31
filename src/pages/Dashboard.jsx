@@ -1,294 +1,177 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Flame, ArrowRight, BookOpen, Workflow, CheckCircle2, BarChart3, RefreshCcw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Flame, Sparkles, ArrowRight, Zap, Repeat, BarChart3 } from 'lucide-react';
-import useStore from '../state/store';
-import { getModuleList, getLessonsByModule } from '../data/api';
 import MascotCoach from '../components/MascotCoach';
-
-const tutorialSteps = [
-  {
-    id: 'progress',
-    title: 'This is your home base',
-    message: 'Check your streak, XP, and daily goal at a glance.'
-  },
-  {
-    id: 'cta',
-    title: 'Continue learning',
-    message: 'Tap here any time—Milo will guide you to the next lesson.'
-  },
-  {
-    id: 'actions',
-    title: 'Quick shortcuts',
-    message: 'Jump into a quick practice, review lessons, or view your progress.'
-  },
-  {
-    id: 'coach',
-    title: 'Coach Milo',
-    message: 'I’ll keep you motivated and let you know what to do next!'
-  }
-];
+import useStore from '../state/store';
+import useModuleProgress from '../hooks/useModuleProgress';
+import { getLesson } from '../data/api';
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { user, lessonProgress, onboarding, finishTutorial } = useStore();
+  const user = useStore((state) => state.user);
+  const quizStats = useStore((state) => state.quizStats);
+  const { modules, nextLessonId, nextLessonState, allCompleted } = useModuleProgress();
 
-  const [tourActive, setTourActive] = useState(onboarding.needsTutorial);
-  const [tourStep, setTourStep] = useState(0);
+  const activeModule = modules.find((module) => module.nextLesson) ?? modules[modules.length - 1];
+  const activeLesson = nextLessonId ? getLesson(nextLessonId) : null;
+  const nextActionIsQuiz = nextLessonState?.status === 'quiz_pending';
 
-  const progressRef = useRef(null);
-  const ctaRef = useRef(null);
-  const actionsRef = useRef(null);
-  const coachRef = useRef(null);
+  const goalTarget = Math.max(user.dailyGoal || 0, 20);
+  const dailyGoalProgress = Math.min((user.dailyXP / goalTarget) * 100, 100);
+  const displayedDailyXP = Math.min(user.dailyXP, goalTarget);
+  const streakMessage = user.streak > 0 ? `${user.streak}-day streak` : 'Let’s build your first streak';
 
-  useEffect(() => {
-    if (onboarding.needsTutorial) {
-      setTourActive(true);
-      setTourStep(0);
-    }
-  }, [onboarding.needsTutorial]);
-
-  useEffect(() => {
-    const handler = () => {
-      setTourActive(true);
-      setTourStep(0);
-    };
-    window.addEventListener('casequest:tutorial:replay', handler);
-    return () => window.removeEventListener('casequest:tutorial:replay', handler);
-  }, []);
-
-  const modules = useMemo(() => getModuleList(), []);
-
-  const journey = useMemo(() => {
-    let activeModule = modules[0];
-    let activeLesson = null;
-    let completedLessons = 0;
-    let totalLessons = 0;
-
-    for (const module of modules) {
-      const lessons = getLessonsByModule(module.id);
-      totalLessons = lessons.length;
-      const incomplete = lessons.find((lesson) => {
-        const status = lessonProgress[lesson.id];
-        return !(status && (status.status === 'mastered' || status.crownLevel >= 1));
-      });
-      completedLessons = lessons.filter((lesson) => {
-        const status = lessonProgress[lesson.id];
-        return status && (status.status === 'mastered' || status.crownLevel >= 1);
-      }).length;
-
-      if (incomplete) {
-        activeModule = module;
-        activeLesson = incomplete;
-        break;
+  const coachMessage = allCompleted
+    ? {
+        message: 'Foundations complete! 🎉',
+        subtext: 'Try the Case Simulator when you’re ready for a full practice round.',
+        mood: 'celebrate'
       }
-    }
-
-    return {
-      activeModule,
-      activeLesson,
-      completedLessons,
-      totalLessons
-    };
-  }, [lessonProgress, modules]);
-
-  const dailyGoalProgress = Math.min((user.dailyXP / user.dailyGoal) * 100, 100);
-
-  const hasStarted = useMemo(() => {
-    return Object.values(lessonProgress).some((progress) => progress && progress.status);
-  }, [lessonProgress]);
-
-  const coachMessage = useMemo(() => {
-    if (!journey.activeLesson) {
-      return {
-        message: 'You have completed the available lessons—stellar work!',
-        subtext: 'Hop into Quick Practice whenever you want to keep the streak alive.',
-        mood: 'celebrate'
+    : {
+        message: activeLesson
+          ? nextActionIsQuiz
+            ? `Quiz time: ${activeLesson.title}`
+            : `Next up: ${activeLesson.title}`
+          : 'Ready for the next learning module?',
+        subtext: nextActionIsQuiz
+          ? 'Take the short quiz to lock in what you just learned. Milo is cheering for you!'
+          : 'Open the lesson to keep your momentum going. Little wins stack fast.',
+        mood: 'encourage'
       };
-    }
-    if (dailyGoalProgress >= 100) {
-      return {
-        message: `You hit today’s goal. Want to bank extra XP on ${journey.activeLesson.title}?`,
-        subtext: 'Even five more minutes keeps momentum going.',
-        mood: 'celebrate'
-      };
-    }
-    return {
-      message: `Next up: ${journey.activeLesson.title}. I’ll walk you through each step.`,
-      subtext: 'Finish one micro-lesson to keep your streak glowing.',
-      mood: 'encourage'
-    };
-  }, [journey.activeLesson, dailyGoalProgress]);
 
-  const quickActions = [
+  const actions = [
     {
-      title: 'Quick practice',
-      description: '2-minute market sizing drill.',
-      icon: <Zap className="w-5 h-5" />,
-      onClick: () => navigate('/lesson/ms1')
-    },
-    {
-      title: 'Review lessons',
-      description: 'Refresh what you already learned.',
-      icon: <Repeat className="w-5 h-5" />,
+      title: 'Open learning modules',
+      description: 'Visit your beginner journey and continue where you left off.',
+      icon: <BookOpen className="w-5 h-5" />,
       onClick: () => navigate('/learn')
     },
     {
-      title: 'See progress',
-      description: 'Your streak, XP, and milestones.',
-      icon: <BarChart3 className="w-5 h-5" />,
-      onClick: () => navigate('/progress')
+      title: 'Open case simulator',
+      description: 'Try the card-based simulator when you want a full case experience.',
+      icon: <Workflow className="w-5 h-5" />,
+      onClick: () => navigate('/simulator')
     }
   ];
 
-  const handleContinue = () => {
-    if (journey.activeLesson) {
-      navigate(`/lesson/${journey.activeLesson.id}`);
-    } else {
-      navigate('/learn');
-    }
-  };
-
-  const advanceTour = () => {
-    if (tourStep >= tutorialSteps.length - 1) {
-      setTourActive(false);
-      finishTutorial();
-    } else {
-      setTourStep((prev) => prev + 1);
-    }
-  };
-
-  const highlight = tutorialSteps[tourStep]?.id;
+  const totalQuizzesPassed = quizStats?.totalPassed || 0;
+  const totalQuizAttempts = quizStats?.totalAttempts || 0;
+  const averageQuizScore = quizStats?.totalQuestions
+    ? Math.round((quizStats.totalCorrect / quizStats.totalQuestions) * 100)
+    : null;
 
   return (
-    <div className="min-h-screen px-4 pt-8 pb-24 bg-gradient-to-br from-slate-50 via-white to-indigo-100">
-      <div className="max-w-3xl mx-auto space-y-6">
-        <motion.section
-          ref={progressRef}
-          animate={{ scale: tourActive && highlight === 'progress' ? 1.02 : 1 }}
-          className={`relative rounded-3xl bg-white shadow-xl border ${
-            tourActive && highlight === 'progress'
-              ? 'border-indigo-400 ring-4 ring-indigo-200 z-50'
-              : 'border-indigo-100'
-          } p-6`}
-        >
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-100 px-4 pb-24 pt-8">
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
+        <section className="rounded-3xl border border-indigo-100 bg-white p-6 shadow-xl">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs uppercase tracking-wide text-gray-500">Welcome back</p>
-              <h1 className="text-2xl font-semibold text-gray-900">Hi {user.name}! 👋</h1>
+              <h1 className="text-2xl font-semibold text-gray-900">Hi {user.name} 👋</h1>
             </div>
-            <div className="text-right text-sm text-indigo-500 font-medium flex items-center gap-2">
-              <Flame className="w-4 h-4" />
-              {user.streak}-day streak
+            <div className="flex items-center gap-2 text-sm font-medium text-indigo-600">
+              <Flame className="h-4 w-4" />
+              {streakMessage}
             </div>
           </div>
-          <div className="mt-4 space-y-2">
+
+          <div className="mt-6 space-y-3">
             <div className="flex items-center justify-between text-xs text-gray-500">
               <span>Daily goal</span>
-              <span>{user.dailyXP}/{user.dailyGoal} XP</span>
+              <span>{displayedDailyXP}/{goalTarget} points</span>
             </div>
-            <div className="h-2 w-full rounded-full bg-gray-200 overflow-hidden">
+            <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-500"
+                className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all"
                 style={{ width: `${dailyGoalProgress}%` }}
               />
             </div>
           </div>
-        </motion.section>
+        </section>
 
-        <motion.section
-          ref={ctaRef}
-          animate={{ scale: tourActive && highlight === 'cta' ? 1.02 : 1 }}
-          className={`relative rounded-3xl bg-gradient-to-br from-indigo-600 via-indigo-500 to-purple-500 text-white shadow-xl p-6 ${
-            tourActive && highlight === 'cta' ? 'ring-4 ring-indigo-200 z-50' : ''
-          }`}
-        >
-          <p className="text-xs uppercase tracking-wide text-indigo-100">Next lesson</p>
-          <h2 className="text-2xl font-semibold mt-1">
-            {journey.activeModule ? journey.activeModule.title : 'All modules complete!'}
+        <section className="rounded-3xl border border-indigo-100 bg-gradient-to-br from-indigo-600 via-indigo-500 to-purple-500 p-6 text-white shadow-xl">
+          <p className="text-xs uppercase tracking-wide text-indigo-100">Continue learning</p>
+          <h2 className="mt-1 text-2xl font-semibold">
+            {activeModule?.module.title || 'Learning Modules'}
           </h2>
-          {journey.activeLesson && (
-            <p className="text-indigo-100 text-sm mt-2">
-              {journey.completedLessons}/{journey.totalLessons} lessons complete · Up next: {journey.activeLesson.title}
-            </p>
-          )}
+          <p className="mt-2 text-sm text-indigo-100">
+            {activeModule?.completedCount || 0}/{activeModule?.totalLessons || 1} lessons complete
+            {activeLesson ? ` · Next: ${activeLesson.title} (${nextActionIsQuiz ? 'quiz' : 'lesson'})` : ''}
+          </p>
           <button
             type="button"
-            onClick={handleContinue}
-            className="mt-6 w-full inline-flex items-center justify-center gap-3 px-6 py-4 text-lg font-semibold bg-white text-indigo-600 rounded-2xl shadow-lg hover:bg-indigo-50"
+            onClick={() => {
+              if (activeLesson) {
+                navigate(nextActionIsQuiz ? `/quiz/${activeLesson.id}` : `/lesson/${activeLesson.id}`);
+              } else {
+                navigate('/learn');
+              }
+            }}
+            className="mt-6 inline-flex w-full items-center justify-center gap-3 rounded-2xl bg-white px-6 py-4 text-lg font-semibold text-indigo-600 shadow-lg hover:bg-indigo-50"
           >
-            {hasStarted ? 'Continue learning' : 'Start your first lesson'}
-            <ArrowRight className="w-5 h-5" />
+            {activeLesson
+              ? nextActionIsQuiz
+                ? 'Take lesson quiz'
+                : 'Resume micro-lesson'
+              : 'Review learning modules'}
+            <ArrowRight className="h-5 w-5" />
           </button>
-        </motion.section>
+        </section>
 
-        <motion.section
-          ref={actionsRef}
-          animate={{ scale: tourActive && highlight === 'actions' ? 1.02 : 1 }}
-          className={`relative grid grid-cols-1 md:grid-cols-3 gap-3 ${
-            tourActive && highlight === 'actions'
-              ? 'ring-4 ring-indigo-200 rounded-3xl bg-white p-2 shadow-lg z-50'
-              : ''
-          }`}
-        >
-          {quickActions.map((action) => (
+        <section className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          {actions.map((action) => (
             <button
               key={action.title}
               type="button"
               onClick={action.onClick}
-              className="rounded-2xl bg-white shadow-sm border border-gray-100 p-4 text-left hover:border-indigo-200 hover:shadow-md transition"
+              className="rounded-2xl border border-indigo-100 bg-white p-4 text-left shadow-sm transition hover:border-indigo-300 hover:shadow-md"
             >
               <div className="flex items-center gap-3 text-indigo-600 font-medium">
-                {action.icon}
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50">
+                  {action.icon}
+                </span>
                 {action.title}
               </div>
-              <p className="text-sm text-gray-600 mt-2 leading-relaxed">{action.description}</p>
+              <p className="mt-2 text-sm text-gray-600">{action.description}</p>
             </button>
           ))}
-        </motion.section>
+        </section>
 
-        <div ref={coachRef} className={tourActive && highlight === 'coach' ? 'relative z-50' : 'relative'}>
-          <MascotCoach
-            message={coachMessage.message}
-            subtext={coachMessage.subtext}
-            mood={coachMessage.mood}
-          />
-        </div>
-      </div>
-
-      <AnimatePresence>
-        {tourActive && (
-          <motion.div
-            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm flex items-end md:items-center justify-center"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <div className="absolute inset-0" onClick={advanceTour} />
-            <motion.div
-              key={tourStep}
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 30 }}
-              transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-              className="relative z-50 max-w-sm w-full mx-4 mb-12 md:mb-0 bg-white rounded-2xl shadow-2xl p-6"
-            >
-              <div className="text-sm text-indigo-500 font-semibold mb-1">
-                Step {tourStep + 1} of {tutorialSteps.length}
+        <section className="rounded-3xl border border-indigo-100 bg-white p-6 shadow-sm">
+          <p className="text-xs uppercase tracking-wide text-indigo-500 font-semibold">Your progress</p>
+          <h2 className="mt-1 text-xl font-semibold text-gray-900">Quiz check-ins</h2>
+          <div className="mt-4 grid gap-4 md:grid-cols-3">
+            <div className="rounded-2xl border border-indigo-100 bg-indigo-50/60 p-4">
+              <div className="flex items-center gap-2 text-indigo-600 text-sm font-semibold">
+                <CheckCircle2 className="h-4 w-4" /> Passed
               </div>
-              <h3 className="text-xl font-semibold text-gray-900">{tutorialSteps[tourStep].title}</h3>
-              <p className="text-sm text-gray-600 mt-2">{tutorialSteps[tourStep].message}</p>
-              <button
-                type="button"
-                onClick={advanceTour}
-                className="mt-4 inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700"
-              >
-                {tourStep === tutorialSteps.length - 1 ? 'Let’s start learning!' : 'Got it!'}
-              </button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              <p className="mt-2 text-2xl font-bold text-indigo-700">{totalQuizzesPassed}</p>
+              <p className="text-xs text-indigo-500 mt-1">Celebrated wins so far</p>
+            </div>
+            <div className="rounded-2xl border border-purple-100 bg-purple-50/60 p-4">
+              <div className="flex items-center gap-2 text-purple-600 text-sm font-semibold">
+                <RefreshCcw className="h-4 w-4" /> Attempts
+              </div>
+              <p className="mt-2 text-2xl font-bold text-purple-700">{totalQuizAttempts}</p>
+              <p className="text-xs text-purple-500 mt-1">Practice rounds completed</p>
+            </div>
+            <div className="rounded-2xl border border-pink-100 bg-pink-50/60 p-4">
+              <div className="flex items-center gap-2 text-pink-600 text-sm font-semibold">
+                <BarChart3 className="h-4 w-4" /> Average score
+              </div>
+              <p className="mt-2 text-2xl font-bold text-pink-700">
+                {averageQuizScore !== null ? `${averageQuizScore}%` : '—'}
+              </p>
+              <p className="text-xs text-pink-500 mt-1">Across all quiz questions</p>
+            </div>
+          </div>
+        </section>
+
+        <MascotCoach
+          message={coachMessage.message}
+          subtext={coachMessage.subtext}
+          mood={coachMessage.mood}
+        />
+      </div>
     </div>
   );
 }

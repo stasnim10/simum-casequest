@@ -1,691 +1,511 @@
 export const modules = [
   {
-    id: 'm1',
-    title: 'Consulting Mindset',
-    summary: 'Case flow, MECE, hypothesis',
-    lessons: ['l1', 'l2', 'l3', 'l4', 'l5']
+    id: 'foundations_intro',
+    title: 'Case Interviews 101',
+    summary: 'Start here to understand what case interviews are and why recruiters love them.',
+    lessons: ['foundations_intro']
   },
   {
-    id: 'm2',
-    title: 'Profitability Basics',
-    summary: 'Revenue, cost, drivers',
-    prereq: 'm1',
-    lessons: ['l6', 'l7', 'l8', 'l9', 'l10']
+    id: 'foundations_skills',
+    title: 'Consulting Essentials',
+    summary: 'Build comfort with communication, structure, and the mindset interviewers expect.',
+    lessons: ['foundations_skills']
   },
   {
-    id: 'm3',
-    title: 'Market Sizing Mastery',
-    summary: 'Top-down, bottom-up, practice cases',
-    lessons: ['ms1', 'ms2', 'ms3']
+    id: 'foundations_sizing',
+    title: 'Market Sizing Basics',
+    summary: 'Learn the intuition behind quick sizing estimates and try a friendly practice funnel.',
+    lessons: ['foundations_sizing']
+  },
+  {
+    id: 'foundations_profit',
+    title: 'Profitability First Steps',
+    summary: 'Meet the profit equation and see how revenue and cost stories come together.',
+    lessons: ['foundations_profit']
   }
 ];
 
 export const lessons = [
   {
-    id: 'l1',
-    moduleId: 'm1',
-    title: 'What is a case interview',
-    objectives: ['Purpose', 'Assessment areas', 'Typical flow'],
-    quiz: [
-      {
-        id: 'q1',
-        type: 'mcq',
-        stem: 'Main goal of a case interview?',
-        options: ['Charisma', 'Structured problem solving', 'Memory'],
-        answer: 'Structured problem solving',
-        rationale: 'Assesses thinking process'
-      },
-      {
-        id: 'q2',
-        type: 'fill',
-        stem: 'MECE stands for ____ Exclusive, Collectively Exhaustive',
-        accept: ['Mutually'],
-        rationale: 'Framework for structured thinking'
-      },
-      {
-        id: 'q3',
-        type: 'calc',
-        stem: 'Revenue $20M, margin 25%. Profit?',
-        unit: '$',
-        correct: 5,
-        tolerance: 0.5,
-        rationale: '20 * 0.25 = 5'
-      }
-    ]
-  },
-  {
-    id: 'l2',
-    moduleId: 'm1',
-    title: 'MECE Framework',
-    objectives: ['Mutually Exclusive', 'Collectively Exhaustive', 'Application'],
-    quiz: [
-      {
-        id: 'q4',
-        type: 'mcq',
-        stem: 'Which is MECE for customer segments?',
-        options: ['Young, Old, Rich', 'B2B, B2C', 'North, South, East'],
-        answer: 'B2B, B2C',
-        rationale: 'Mutually exclusive and covers all customers'
-      },
-      {
-        id: 'q5',
-        type: 'fill',
-        stem: 'MECE helps avoid ____ and gaps',
-        accept: ['overlap', 'overlaps', 'duplication'],
-        rationale: 'Ensures complete coverage without redundancy'
-      },
-      {
-        id: 'q6',
-        type: 'mcq',
-        stem: 'Why use MECE?',
-        options: ['Impress interviewer', 'Organize thinking clearly', 'Memorize frameworks'],
-        answer: 'Organize thinking clearly',
-        rationale: 'Core principle of structured problem solving'
-      }
-    ]
-  },
-  {
-    id: 'l3',
-    moduleId: 'm1',
-    title: 'Hypothesis-Driven Approach',
-    objectives: ['Form hypothesis', 'Test systematically', 'Iterate'],
-    quiz: [
-      {
-        id: 'q7',
-        type: 'mcq',
-        stem: 'A hypothesis is:',
-        options: ['A wild guess', 'An educated assumption to test', 'The final answer'],
-        answer: 'An educated assumption to test',
-        rationale: 'Guides investigation efficiently'
-      },
-      {
-        id: 'q8',
-        type: 'fill',
-        stem: 'Start with a ____, then gather data to validate',
-        accept: ['hypothesis'],
-        rationale: 'Hypothesis-driven approach'
-      },
-      {
-        id: 'q9',
-        type: 'mcq',
-        stem: 'If hypothesis is wrong:',
-        options: ['Give up', 'Revise and test again', 'Hide the mistake'],
-        answer: 'Revise and test again',
-        rationale: 'Iterative process'
-      }
-    ]
-  },
-  {
-    id: 'l4',
-    moduleId: 'm1',
-    title: 'Case Interview Structure',
-    objectives: ['Opening', 'Analysis', 'Recommendation'],
-    quiz: [
-      {
-        id: 'q10',
-        type: 'mcq',
-        stem: 'First step in a case?',
-        options: ['Give answer', 'Clarify the question', 'Start calculating'],
-        answer: 'Clarify the question',
-        rationale: 'Ensure you understand the problem'
-      },
-      {
-        id: 'q11',
-        type: 'fill',
-        stem: 'Always end with a clear ____',
-        accept: ['recommendation', 'answer', 'conclusion'],
-        rationale: 'Synthesize findings into action'
-      },
-      {
-        id: 'q12',
-        type: 'mcq',
-        stem: 'During analysis, you should:',
-        options: ['Work silently', 'Think out loud', 'Rush to answer'],
-        answer: 'Think out loud',
-        rationale: 'Show your thought process'
-      }
-    ]
-  },
-  {
-    id: 'l5',
-    moduleId: 'm1',
-    title: 'Communication Skills',
-    objectives: ['Clarity', 'Structure', 'Confidence'],
-    quiz: [
-      {
-        id: 'q13',
-        type: 'mcq',
-        stem: 'Best way to present findings?',
-        options: ['Ramble through details', 'Top-down: answer first, then support', 'Bottom-up: data then conclusion'],
-        answer: 'Top-down: answer first, then support',
-        rationale: 'Pyramid principle'
-      },
-      {
-        id: 'q14',
-        type: 'fill',
-        stem: 'Use ____ language, avoid jargon',
-        accept: ['simple', 'clear', 'plain'],
-        rationale: 'Ensure understanding'
-      },
-      {
-        id: 'q15',
-        type: 'mcq',
-        stem: 'If you don\'t know something:',
-        options: ['Make it up', 'Admit it and explain your approach', 'Change topic'],
-        answer: 'Admit it and explain your approach',
-        rationale: 'Honesty and problem-solving ability'
-      }
-    ]
-  },
-  {
-    id: 'l6',
-    moduleId: 'm2',
-    title: 'Profit Equation',
-    objectives: ['Revenue - Cost = Profit', 'Key drivers', 'Break-even'],
-    quiz: [
-      {
-        id: 'q16',
-        type: 'calc',
-        stem: 'Revenue $100M, Costs $80M. Profit?',
-        unit: '$M',
-        correct: 20,
-        tolerance: 1,
-        rationale: '100 - 80 = 20'
-      },
-      {
-        id: 'q17',
-        type: 'fill',
-        stem: 'Profit = Revenue - ____',
-        accept: ['Cost', 'Costs', 'Expenses'],
-        rationale: 'Basic profit equation'
-      },
-      {
-        id: 'q18',
-        type: 'calc',
-        stem: 'Fixed costs $50K, variable cost per unit $10, price $30. Break-even units?',
-        unit: 'units',
-        correct: 2500,
-        tolerance: 100,
-        rationale: '50000 / (30-10) = 2500'
-      }
-    ]
-  },
-  {
-    id: 'l7',
-    moduleId: 'm2',
-    title: 'Revenue Drivers',
-    objectives: ['Price × Volume', 'Market size', 'Market share'],
-    quiz: [
-      {
-        id: 'q19',
-        type: 'calc',
-        stem: 'Price $50, Volume 1000 units. Revenue?',
-        unit: '$',
-        correct: 50000,
-        tolerance: 100,
-        rationale: '50 * 1000 = 50000'
-      },
-      {
-        id: 'q20',
-        type: 'fill',
-        stem: 'Revenue = ____ × Volume',
-        accept: ['Price'],
-        rationale: 'Basic revenue formula'
-      },
-      {
-        id: 'q21',
-        type: 'calc',
-        stem: 'Market size $1B, your share 5%. Your revenue?',
-        unit: '$M',
-        correct: 50,
-        tolerance: 5,
-        rationale: '1000 * 0.05 = 50'
-      }
-    ]
-  },
-  {
-    id: 'l8',
-    moduleId: 'm2',
-    title: 'Cost Structure',
-    objectives: ['Fixed vs Variable', 'Direct vs Indirect', 'Cost drivers'],
-    quiz: [
-      {
-        id: 'q22',
-        type: 'mcq',
-        stem: 'Which is a fixed cost?',
-        options: ['Raw materials', 'Rent', 'Sales commissions'],
-        answer: 'Rent',
-        rationale: 'Does not vary with production volume'
-      },
-      {
-        id: 'q23',
-        type: 'fill',
-        stem: '____ costs change with production volume',
-        accept: ['Variable'],
-        rationale: 'Opposite of fixed costs'
-      },
-      {
-        id: 'q24',
-        type: 'calc',
-        stem: 'Fixed costs $100K, variable cost $20/unit, 5000 units. Total cost?',
-        unit: '$K',
-        correct: 200,
-        tolerance: 10,
-        rationale: '100 + (20 * 5) = 200'
-      }
-    ]
-  },
-  {
-    id: 'l9',
-    moduleId: 'm2',
-    title: 'Margin Analysis',
-    objectives: ['Gross margin', 'Operating margin', 'Net margin'],
-    quiz: [
-      {
-        id: 'q25',
-        type: 'calc',
-        stem: 'Revenue $200, COGS $120. Gross margin %?',
-        unit: '%',
-        correct: 40,
-        tolerance: 2,
-        rationale: '(200-120)/200 * 100 = 40%'
-      },
-      {
-        id: 'q26',
-        type: 'fill',
-        stem: 'Gross margin = (Revenue - ____) / Revenue',
-        accept: ['COGS', 'Cost of Goods Sold'],
-        rationale: 'Measures production efficiency'
-      },
-      {
-        id: 'q27',
-        type: 'calc',
-        stem: 'Revenue $500K, Operating profit $100K. Operating margin %?',
-        unit: '%',
-        correct: 20,
-        tolerance: 1,
-        rationale: '100/500 * 100 = 20%'
-      }
-    ]
-  },
-  {
-    id: 'l10',
-    moduleId: 'm2',
-    title: 'Profitability Levers',
-    objectives: ['Increase revenue', 'Decrease costs', 'Improve efficiency'],
-    quiz: [
-      {
-        id: 'q28',
-        type: 'mcq',
-        stem: 'To improve profitability:',
-        options: ['Only cut costs', 'Only raise prices', 'Optimize revenue and costs'],
-        answer: 'Optimize revenue and costs',
-        rationale: 'Balanced approach'
-      },
-      {
-        id: 'q29',
-        type: 'fill',
-        stem: 'Quick wins often come from ____ reduction',
-        accept: ['cost', 'expense'],
-        rationale: 'Easier to control than revenue'
-      },
-      {
-        id: 'q30',
-        type: 'calc',
-        stem: 'Current profit $50K, increase revenue 20% and cut costs 10%. Revenue $200K, costs $150K. New profit?',
-        unit: '$K',
-        correct: 105,
-        tolerance: 5,
-        rationale: '(200*1.2) - (150*0.9) = 240 - 135 = 105'
-      }
-    ]
-  },
-  {
-    id: 'ms1',
-    moduleId: 'm3',
-    title: 'Market Sizing Foundations',
+    id: 'foundations_intro',
+    moduleId: 'foundations_intro',
+    title: 'What Is a Case Interview?',
     microLesson: [
       {
         type: 'info',
-        title: 'What is market sizing?',
-        content: 'Market sizing is a quick estimate of how big an opportunity may be. It helps consultants decide if an idea is worth chasing.',
-        visual: '📊 Milo holds a clipboard labelled “Opportunity?”',
-        milo: 'We size markets to answer: “Is this a small pond or an ocean?”'
-      },
-      {
-        type: 'info',
-        title: 'Why it matters',
-        content: 'Interviewers use market sizing to see your structure, math, and logic. A calm approach beats a memorized trick every time.',
-        visual: '🎯 Target icon with calm waves',
-        milo: 'Nervous? Totally normal. We’ll keep each step simple and human.'
-      },
-      {
-        type: 'info',
-        title: 'Top-down at a glance',
-        content: 'Start wide, then filter down. Think of a funnel: everyone in the population → narrow to your target.',
-        visual: '🔽 Funnel made of emoji (👥 → 🔽 → 🛍️)',
-        milo: 'Picture pouring sand through a funnel. We only keep the grains that match our customer.'
-      },
-      {
-        type: 'example',
-        title: 'Top-down worked example',
-        content: [
-          'Goal: Estimate weekly bottled water buyers in a city.',
-          '1. City population: 500,000 people',
-          '2. % who buy bottled water weekly: 30%',
-          '3. Weekly buyers: 500,000 × 0.30 = 150,000 people'
-        ],
-        visual: '🧮 Milo pointing at a three-step ladder',
-        milo: 'We just moved from “everyone” to “people who actually buy.” Nice funnel!'
-      },
-      {
-        type: 'practice',
-        title: 'Practice: top-down funnel',
-        content: 'If 40% of a city with 200,000 people drinks coffee daily, how many daily coffee drinkers is that?',
-        visual: '☕️',
-        input: 'number',
-        answer: 80000,
-        hint: 'Multiply the total population by the daily coffee percentage.',
-        feedbackCorrect: 'Exactly! 200,000 × 0.40 = 80,000 daily coffee lovers.',
-        feedbackIncorrect: 'Try multiplying 200,000 by 0.40. The funnel keeps only coffee fans.',
-        milo: 'Say it aloud or type it—either way we’re flexing that math muscle!'
-      },
-      {
-        type: 'info',
-        title: 'Bottom-up at a glance',
-        content: 'Bottom-up starts from one unit (store, customer, product) and scales up. Think LEGO bricks stacking together.',
-        visual: '🧱 LEGO tower with Milo stacking bricks',
-        milo: 'One shop, then another, then another… tiny pieces make the big picture!'
-      },
-      {
-        type: 'example',
-        title: 'Bottom-up worked example',
-        content: [
-          'Goal: Estimate annual revenue for a small pizza shop.',
-          '1. Pizzas per day: 120',
-          '2. Price per pizza: $12',
-          '3. Open days: 360',
-          '4. Revenue: 120 × $12 × 360 = $518,400'
-        ],
-        visual: '🍕 Calculator with pizza slices',
-        milo: 'Feel how each assumption is grounded? Customers × price × days = revenue.'
-      },
-      {
-        type: 'practice',
-        title: 'Practice: build it up',
-        content: 'A juice bar sells 80 smoothies a day at $6 and opens 340 days a year. What’s the annual revenue?',
-        visual: '🥤',
-        input: 'number',
-        answer: 163200,
-        hint: 'Multiply daily smoothies × price × open days.',
-        feedbackCorrect: 'Smooth! 80 × 6 × 340 = $163,200.',
-        feedbackIncorrect: 'Multiply daily smoothies × price × open days. Stack those LEGO bricks.',
-        milo: 'Want Milo’s pep tip? Say the formula before you crunch it.'
-      },
-      {
-        type: 'recap',
-        title: 'Mini-quiz: choose the best move',
-        questions: [
+        title: 'Welcome to the journey',
+        content: 'Case interviews are structured conversations about a business problem. You are invited to think aloud, explore options, and make a recommendation.',
+        visual: '🗺️',
+        milo: 'Treat it like a puzzle we solve together rather than an exam you must pass alone.',
+        keyTerms: [
           {
-            prompt: 'Which approach starts with the whole population and filters down?',
-            type: 'mcq',
-            options: ['Top-down', 'Bottom-up', 'Sideways analysis'],
-            answer: 'Top-down',
-            feedbackCorrect: 'Yes! Top-down is the funnel approach.',
-            feedbackIncorrect: 'Remember: top-down = wide to narrow.'
-          },
-          {
-            prompt: 'Estimate: 150,000 people × $20 monthly. What’s the annual market size?',
-            type: 'calc',
-            placeholder: 'Enter a number in dollars',
-            answer: 36000000,
-            tolerance: 1000000,
-            feedbackCorrect: 'Nice! 150,000 × $20 × 12 = $36,000,000.',
-            feedbackIncorrect: 'Try multiplying people × price × 12 months.'
+            term: 'Case interview',
+            definition: 'A guided problem-solving chat where you partner with the interviewer to tackle a real-world-style challenge.'
           }
-        ],
-        visual: '✅ Milo giving a high-five',
-        milo: 'Look at you—funnels + LEGO bricks = market sizing superpowers!'
+        ]
       },
       {
         type: 'info',
-        title: 'Summary & next steps',
-        content: 'Top-down filters a big population. Bottom-up builds from unit economics. Your job: pick the sharper tool for the case.',
-        visual: '🛠️ Toolbox labelled “Consultant Kit”',
-        milo: 'Next up we’ll practice switching between methods like a pro. Ready when you are!'
-      }
-    ]
-  },
-  {
-    id: 'ms2',
-    moduleId: 'm3',
-    title: 'Top-Down Playbook',
-    microLesson: [
-      {
-        type: 'info',
-        title: 'Today’s goal',
-        content: 'Become fluent with top-down sizing, and cross-check with a quick bottom-up to sanity check yourself.',
-        visual: '🎯 Milo aiming at a target marked “Confidence”',
-        milo: 'Every great case answer starts with a calm plan. Let’s build one.'
-      },
-      {
-        type: 'info',
-        title: 'Top-down roadmap',
-        content: 'Use the PEEL steps: Population, Engagement, Expected purchase, Likely spend.',
-        visual: '🗺️ Milo unfolding a roadmap with P → E → E → L markers',
-        milo: 'PEEL is like peeling an onion—layer by layer till you reach real demand.'
+        title: 'Why companies use them',
+        content: 'Firms care less about the exact answer and more about how you listen, structure ideas, and adapt when information changes.',
+        visual: '🎯',
+        milo: 'Managers want teammates who stay calm, curious, and collaborative.'
       },
       {
         type: 'example',
-        title: 'Worked example: streaming subscribers',
-        content: [
-          '1. Country households: 10 million',
-          '2. % with high-speed internet: 70% → 7 million',
-          '3. % who stream video daily: 50% → 3.5 million',
-          '4. Target platform conversion: 25% → 875,000 paying users'
+        title: 'Mini example: Opening the case',
+        visual: '🎙️',
+        example: {
+          prompt: 'Interviewer: “Our apparel retailer’s profit dropped last quarter. How would you start?”',
+          dialogue: [
+            { speaker: 'You', line: 'I’d love to confirm the goal. Are we trying to diagnose the drivers behind the drop and recommend fixes?' },
+            { speaker: 'Interviewer', line: 'Exactly—that’s the plan.' },
+            { speaker: 'You', line: 'Great. I’ll recap the situation, outline how I’ll explore it, and check back as we learn more together.' }
+          ]
+        },
+        takeaway: 'Notice how you clarify the goal, show calm structure, and signal partnership before diving in.',
+        keyTerms: [
+          { term: 'Clarifying question', definition: 'A quick check to align on goals, scope, or definitions before solving.' },
+          { term: 'Recap', definition: 'Your short summary of the situation to show active listening and alignment.' }
         ],
-        visual: '📺 Funnel decorated with movie icons',
-        milo: 'See how each filter trims fluff? We only keep potential superfans.'
-      },
-      {
-        type: 'practice',
-        title: 'Practice: smart speaker sales',
-        content: 'A nation has 80 million households. 60% have Wi-Fi. 40% of those are curious about smart speakers this year. How many target households is that?',
-        visual: '🗣️🔊',
-        input: 'number',
-        answer: 19200000,
-        hint: 'Multiply total households by each percentage filter in order.',
-        feedbackCorrect: 'Exactly! 80M × 0.60 × 0.40 = 19.2M households.',
-        feedbackIncorrect: 'Multiply total households × Wi-Fi adoption × curiosity. Keep peeling!',
-        milo: 'Imagine each Wi-Fi home raising a hand. Only the curious ones stick around.'
+        milo: 'Use warmth and curiosity—you are co-piloting the case.'
       },
       {
         type: 'info',
-        title: 'Triangulate bottom-up',
-        content: 'Cross-check by estimating how many devices retailers can actually sell.',
-        visual: '⚖️ Milo balancing two estimates on a scale',
-        milo: 'Top-down says “huge!” Bottom-up asks, “Do suppliers agree?”'
-      },
-      {
-        type: 'example',
-        title: 'Bottom-up cross-check',
-        content: [
-          '1. Big-box stores: 2,000; average monthly units: 120 → 240,000 units/month',
-          '2. Online retailers: 50; monthly units: 10,000 → 500,000 units/month',
-          '3. Total annual units: (240,000 + 500,000) × 12 = 8,880,000 devices'
-        ],
-        visual: '📦 Delivery trucks full of speakers',
-        milo: 'Boom! If suppliers ship ~9M devices, our 19M interested households look plausible.'
-      },
-      {
-        type: 'practice',
-        title: 'Practice: cross-check your funnel',
-        content: 'You estimated 10M potential buyers. Retail data shows stores can stock 600k units/month plus 200k online. What’s the annual supply?',
-        visual: '🔁',
-        input: 'number',
-        answer: 9600000,
-        hint: 'Add both channels first, then multiply by 12 months.',
-        feedbackCorrect: 'Correct! (600k + 200k) × 12 = 9.6M units.',
-        feedbackIncorrect: 'Add both channels, then multiply by 12 months. Sanity check time!',
-        milo: 'If supply ~ demand, great! If not, revisit assumptions.'
-      },
-      {
-        type: 'recap',
-        title: 'Mini-quiz: top-down mastery',
-        questions: [
+        title: 'What good feels like',
+        content: 'A successful case feels like a friendly brainstorming session. You clarify the goal, lay out a map, and keep checking in.',
+        visual: '🤝',
+        milo: 'Remember: it is perfectly okay to pause, think, and narrate your map.',
+        keyTerms: [
           {
-            prompt: 'Which filter in PEEL turns “interested” into “ready to buy”?',
-            type: 'mcq',
-            options: ['Population', 'Engagement', 'Expected purchase', 'Likely spend'],
-            answer: 'Expected purchase',
-            feedbackCorrect: 'Yes! Expected purchase shows real buyers, not just window shoppers.',
-            feedbackIncorrect: 'Expected purchase is where we ask, “Who actually buys?”'
-          },
-          {
-            prompt: 'If 5M people × $15 monthly subscription × 12 months, what’s the annual revenue?',
-            type: 'calc',
-            placeholder: 'Enter a number in dollars',
-            answer: 900000000,
-            tolerance: 20000000,
-            feedbackCorrect: 'Nailed it: $900,000,000.',
-            feedbackIncorrect: 'Multiply people × price × 12 months. Same funnel logic!'
+            term: 'Framework',
+            definition: 'A simple outline of the key areas you plan to explore. It keeps you and the interviewer aligned.'
           }
-        ],
-        visual: '💡 Milo holding a “Top-Down Pro” badge',
-        milo: 'Look at you—filtering like a pro and checking the math twice!'
+        ]
+      },
+      {
+        type: 'practice',
+        title: 'Your story so far',
+        content: 'Take 20 seconds to say (out loud or in a note) what excites you about casing and one thing that feels fuzzy. Saying it helps you claim the space.',
+        visual: '🗣️',
+        input: 'text',
+        answer: '',
+        feedbackCorrect: 'Nice! Awareness is step one. Milo is here whenever you want a boost.',
+        feedbackIncorrect: 'There is no wrong answer—just capture a thought to make it real.',
+        milo: 'You already took the most important step: showing up.',
+        keyTerms: [
+          { term: 'Reflection', definition: 'A quick self-check that keeps you mindful of your energy and focus.' }
+        ]
       },
       {
         type: 'info',
-        title: 'Summary & next steps',
-        content: 'Lead with top-down, sense-check bottom-up, and explicitly call out your confidence. Interviewers love thoughtful math.',
-        visual: '📝 Checklist with “State method” → “Run math” → “Share confidence”',
-        milo: 'Up next we’ll make a bottom-up build feel just as comfy. Ready to stack bricks?'
+        title: 'Ready when you are',
+        content: 'Up next you\'ll translate this calm mindset into tangible habits. You\'ll see how to communicate clearly, structure a simple map, and stay people-focused.',
+        visual: '➡️',
+        milo: 'Click finish whenever you feel the message land. Take the pace that works for you.'
       }
-    ]
-  },
-  {
-    id: 'ms3',
-    moduleId: 'm3',
-    title: 'Hybrid & Mastery',
-    microLesson: [
+    ],
+    quiz: [
       {
-        type: 'info',
-        title: 'Hybrid sizing: the best of both',
-        content: 'Hybrids blend top-down and bottom-up. Start with a funnel, then cross-check with unit economics so your number feels grounded.',
-        visual: '🔄 Funnel icon connected to LEGO bricks',
-        milo: 'Think of it as double-lock security—you’ll sound confident and credible.'
-      },
-      {
-        type: 'info',
-        title: 'Top-down refresher',
-        content: 'Population → filter to target → estimate purchase frequency → multiply by spend.',
-        visual: '🧠 Milo pointing to a 4-step ladder',
-        milo: 'We’ve got this pattern down! Keep your filters MECE and reasonable.'
-      },
-      {
-        type: 'example',
-        title: 'Hybrid case: bike-sharing revenue',
-        content: [
-          'Top-down: City pop 4M; 25% likely cyclists → 1M; 30% try bike share → 300k; 40% become regulars → 120k riders.',
-          'Average rides per rider: 8/month; price per ride: $3 → revenue ≈ 120k × 8 × $3 × 12 = $34.6M.'
-        ],
-        visual: '🚲 Milo riding a city bike with revenue chart trailing',
-        milo: 'Now let’s see if bikes and stations supply that many rides.'
-      },
-      {
-        type: 'practice',
-        title: 'Practice: rider funnel',
-        content: 'If 18% of a 10M city use bike share weekly, how many weekly riders is that?',
-        visual: '🚲🔢',
-        input: 'number',
-        answer: 1800000,
-        hint: 'Multiply total population by the usage percentage.',
-        feedbackCorrect: 'Yes! 10M × 0.18 = 1.8M weekly riders.',
-        feedbackIncorrect: 'Multiply population by the usage percentage. Our funnel keeps only riders.',
-        milo: 'Say the multiplication out loud—it helps catch tiny slips.'
-      },
-      {
-        type: 'info',
-        title: 'Bottom-up cross-check',
-        content: 'Inventory: 15 bike docks × 25 bikes each × 6 rides per bike per day × 330 days = 742,500 rides/day. That’s 271M rides/year.',
-        visual: '📦 Warehouse filled with bikes',
-        milo: 'Plenty of bikes! Our top-down estimate is much lower than capacity—sounds plausible.'
-      },
-      {
-        type: 'example',
-        title: 'Hybrid insight',
-        content: [
-          'Top-down revenue: $34.6M',
-          'Bottom-up capacity revenue: 271M rides/year × $3 = $813M possible',
-          'Interpretation: Plenty of room to grow; our top-down usage is realistic.'
-        ],
-        visual: '🧠 Milo comparing two bar charts',
-        milo: 'Always explain the gap: maybe low adoption today, but infrastructure can handle more!'
-      },
-      {
-        type: 'practice',
-        title: 'Practice: reconcile estimates',
-        content: 'Your top-down says 50M rides/year. Supply can support 80M rides/year. What’s your takeaway?',
-        visual: ' ⚖️',
-        input: 'mcq',
+        id: 'foundations_intro_q1',
+        question: 'What is the primary goal of a case interview?',
         options: [
-          'Demand exceeds supply—add more bikes immediately',
-          'Demand is lower than supply—focus on marketing and adoption',
-          'Both estimates match perfectly—no action needed'
+          'To test memorized business trivia',
+          'To see how you structure and solve business problems with a partner',
+          'To evaluate your ability to win the argument at any cost',
+          'To check whether you already know the industry inside out'
         ],
-        answer: 'Demand is lower than supply—focus on marketing and adoption',
-        hint: 'Compare your demand estimate to the supply capacity.',
-        feedbackCorrect: 'Yes! Supply is ready; the task is boosting usage.',
-        feedbackIncorrect: 'Compare your demand vs capacity. Lower demand means growth levers.',
-        milo: 'Point this out in the interview: it proves you’re thinking business, not just math.'
+        correctAnswer: 1,
+        explanation: 'Interviewers care about your problem-solving approach, collaboration, and structured thinking more than perfect facts.'
       },
       {
-        type: 'recap',
-        title: 'Mini-quiz: hybrid mastery',
-        questions: [
-          {
-            prompt: 'Why mix top-down and bottom-up?',
-            type: 'mcq',
-            options: [
-              'To confuse the interviewer',
-              'To check if both methods tell a consistent story',
-              'Because one method is never enough math'
-            ],
-            answer: 'To check if both methods tell a consistent story',
-            feedbackCorrect: 'Exactly! The goal is confidence, not math for math’s sake.',
-            feedbackIncorrect: 'Hybrids show you understand demand AND supply sides.'
-          },
-          {
-            prompt: 'Calculate: 200k riders × 5 rides/month × $2/ride × 12 months = ?',
-            type: 'calc',
-            placeholder: 'Enter annual revenue',
-            answer: 24000000,
-            tolerance: 1000000,
-            feedbackCorrect: 'Nice! $24,000,000 annual revenue.',
-            feedbackIncorrect: 'Multiply riders × rides × price × 12. Say it step-by-step.'
-          },
-          {
-            prompt: 'If top-down demand is far bigger than bottom-up capacity, what might be wrong?',
-            type: 'mcq',
-            options: [
-              'You double-counted segments in the funnel',
-              'Supply is too low',
-              'Prices are always wrong'
-            ],
-            answer: 'You double-counted segments in the funnel',
-            feedbackCorrect: 'Exactly—overlapping filters inflate top-down demand.',
-            feedbackIncorrect: 'Check whether any filters overlapped. That often inflates the funnel.'
-          }
+        id: 'foundations_intro_q2',
+        question: 'When the interviewer first shares the case, what is a helpful first response?',
+        options: [
+          'Jump straight into brainstorming solutions',
+          'Ask a clarifying question to confirm the goal and show partnership',
+          'Apologize for needing a moment to think',
+          'Request to delay the case until you prepare notes'
         ],
-        visual: '🏅 Milo handing you a “Hybrid Hero” badge',
-        milo: 'This is senior-level thinking—interviewers will notice!'
+        correctAnswer: 1,
+        explanation: 'Clarifying the goal signals calm collaboration and keeps you aligned before you begin solving.'
+      },
+      {
+        id: 'foundations_intro_q3',
+        question: 'What does a quick recap accomplish at the start of a case?',
+        options: [
+          'It lets you repeat the prompt word-for-word to stall for time',
+          'It proves you memorized the script ahead of time',
+          'It shows active listening and confirms that you and the interviewer share the same understanding',
+          'It replaces the need for any framework later on'
+        ],
+        correctAnswer: 2,
+        explanation: 'A short recap demonstrates listening and creates alignment before you explore solutions.'
+      }
+    ]
+  },
+  {
+    id: 'foundations_skills',
+    moduleId: 'foundations_skills',
+    title: 'Consulting Essentials',
+    microLesson: [
+      {
+        type: 'info',
+        title: 'From mindset to habits',
+        content: 'In the intro you saw that cases feel like collaborative puzzles. Now we turn that calm energy into three habits you can rely on in every conversation.',
+        visual: '💡',
+        milo: 'We practice the habits one at a time—no multitasking needed.',
+        keyTerms: [
+          { term: 'Structured thinking', definition: 'Breaking a big question into smaller, logical buckets so you stay MECE (Mutually Exclusive, Collectively Exhaustive).' },
+          { term: 'MECE', definition: 'A classic consulting shorthand meaning your buckets don’t overlap and together cover the full story.' }
+        ]
       },
       {
         type: 'info',
-        title: 'Summary & next challenge',
-        content: 'Lead with a clear structure, sanity-check it, and state your confidence. Next: we’ll apply the same micro-lesson style to tailored case practice.',
-        visual: '🚀 Milo pointing toward the next module',
-        milo: 'Grab a sip of water—you just mastered hybrid sizing!'
+        title: 'Habit 1: communicate simply',
+        content: 'Lead with the “headline” then add color. This helps interviewers follow along and keeps you grounded.',
+        visual: '🗣️',
+        milo: 'Try saying, “My main thought is…” before diving into detail.',
+        keyTerms: [
+          { term: 'Headline', definition: 'Your top takeaway or answer in one sentence before adding supporting points.' }
+        ]
+      },
+      {
+        type: 'info',
+        title: 'Habit 2: structure the map',
+        content: 'A quick outline of the areas you’ll explore shows you can think broadly before diving deep.',
+        visual: '🧭',
+        milo: 'Imagine laying out three labeled buckets on the table. You can move between them later.',
+        keyTerms: [
+          { term: 'Bucket', definition: 'One of the sections in your framework that keeps related ideas together.' },
+          { term: 'Driver', definition: 'A factor that moves a result up or down—like volume driving revenue.' }
+        ]
+      },
+      {
+        type: 'example',
+        title: 'Mini example: MECE structure in action',
+        visual: '🧱',
+        example: {
+          prompt: 'Scenario: “Estimate the impact of a slow coffee shop.”',
+          steps: [
+            { label: 'Step 1 – Headline', detail: '“I’d look at demand, operations, and customer experience to pinpoint the slow-down.”' },
+            { label: 'Step 2 – Clarify buckets', detail: 'Demand (foot traffic), Operations (staffing/process), Experience (wait time, ambiance).' },
+            { label: 'Step 3 – Invite feedback', detail: '“Does that cover the areas you’d like me to explore?”' }
+          ]
+        },
+        takeaway: 'Each bucket is distinct (MECE) yet together tells the full story. You stay flexible but grounded.',
+        keyTerms: [
+          { term: 'Operations', definition: 'The behind-the-scenes processes that deliver the customer experience.' }
+        ],
+        milo: 'Buckets are simply friendly labels—no fancy jargon required.'
+      },
+      {
+        type: 'practice',
+        title: 'Say it out loud',
+        content: 'Pick any decision in your day (coffee choice, weekend plan) and outline how you’d structure the decision in 3 buckets.',
+        visual: '🧩',
+        input: 'text',
+        answer: '',
+        feedbackCorrect: 'Yes! You just practiced thinking top-down. Keep the outline handy for future cases.',
+        feedbackIncorrect: 'No pressure—jot a playful outline. The goal is comfort, not perfection.',
+        milo: 'Every tiny repetition pays off.',
+        keyTerms: [
+          { term: 'Top-down', definition: 'Starting with the high-level structure before zooming into details.' }
+        ]
+      },
+      {
+        type: 'info',
+        title: 'Habit 3: smile with the client',
+        content: 'Interviewers imagine you in front of a real client. Warmth, curiosity, and empathy go a long way.',
+        visual: '🙂',
+        milo: 'Ask yourself: “If I were the client, what would help me feel heard?”',
+        keyTerms: [
+          { term: 'Client empathy', definition: 'Thinking about how the person across the table feels and what support they need.' }
+        ]
+      },
+      {
+        type: 'info',
+        title: 'Nice work',
+        content: 'You now have a repeatable trio: headline, structure, empathy. Next, you’ll add a friendly numbers flow that complements these habits.',
+        visual: '🚀',
+        milo: 'Click finish whenever you feel ready to move on.',
+        keyTerms: [
+          { term: 'Bridge', definition: 'Linking what you just learned to what comes next so your learning journey feels connected.' }
+        ]
+      }
+    ],
+    quiz: [
+      {
+        id: 'foundations_skills_q1',
+        question: 'What does “leading with the headline” mean during a case interview?',
+        options: [
+          'Delivering every detail before sharing your main takeaway',
+          'Starting with your main point or answer, then adding supporting color',
+          'Avoiding a recommendation until the interviewer asks',
+          'Sending a written summary instead of speaking out loud'
+        ],
+        correctAnswer: 1,
+        explanation: 'A clear headline keeps you and the interviewer oriented before you explain supporting points.'
+      },
+      {
+        id: 'foundations_skills_q2',
+        question: 'Which option best demonstrates a MECE framework?',
+        options: [
+          'Market size, customer happiness, brand awareness',
+          'Revenue, cost, external forces—each distinct but together covering the story',
+          'Pricing, pricing, and more pricing',
+          'Unordered ideas captured as they come to mind'
+        ],
+        correctAnswer: 1,
+        explanation: 'MECE buckets do not overlap and together address the whole problem—like revenue, cost, and external context.'
+      },
+      {
+        id: 'foundations_skills_q3',
+        question: 'Why does empathy matter in consulting communication?',
+        options: [
+          'It replaces the need for analysis',
+          'Clients only care about jokes and small talk',
+          'It helps you tailor your message so the client feels heard and supported',
+          'It convinces interviewers you will accept extra work without question'
+        ],
+        correctAnswer: 2,
+        explanation: 'Empathy keeps your structure human—it ensures recommendations land well with real people.'
+      }
+    ]
+  },
+  {
+    id: 'foundations_sizing',
+    moduleId: 'foundations_sizing',
+    title: 'Market Sizing Basics',
+    microLesson: [
+      {
+        type: 'info',
+        title: 'Sizing = quick confidence',
+        content: 'Market sizing estimates are quick sketches. We combine a funnel and simple math to answer, “Is this idea big enough?”',
+        visual: '📈',
+        milo: 'We care about the story behind the number, not perfect precision.',
+        keyTerms: [
+          { term: 'Market sizing', definition: 'A quick estimate of potential demand or revenue using simple, structured math.' }
+        ]
+      },
+      {
+        type: 'info',
+        title: 'Top-down flow',
+        content: 'Start with a population, filter to target customers, estimate how often they buy, and multiply by price.',
+        visual: '🔽',
+        milo: 'Population → Filter → Frequency → Price. Nice and tidy.',
+        keyTerms: [
+          { term: 'Assumption', definition: 'A sensible estimate you make explicit so the interviewer can follow your math.' }
+        ]
+      },
+      {
+        type: 'example',
+        title: 'Mini example: Coffee lovers funnel',
+        visual: '☕️',
+        example: {
+          prompt: 'Let’s estimate weekly cafe spend in a city of 1M people.',
+          steps: [
+            { label: 'Population', detail: '1,000,000 people' },
+            { label: 'Filter', detail: '40% drink coffee → 400,000 people' },
+            { label: 'Preference', detail: 'Half prefer cafes → 200,000 guests' },
+            { label: 'Frequency', detail: '3 cups/week → 600,000 cups' },
+            { label: 'Price', detail: '$4/cup → $2.4M weekly revenue' }
+          ],
+          dialogue: [
+            { speaker: 'You', line: 'I’ll use a top-down funnel so you can see each assumption. We can tweak any layer as needed.' },
+            { speaker: 'Interviewer', line: 'Great—call out your math as you go so I can follow.' }
+          ]
+        },
+        takeaway: 'Showing each layer keeps the interviewer close. Invite them to adjust assumptions—it proves you are collaborative.',
+        keyTerms: [
+          { term: 'Funnel', definition: 'A step-by-step filter that narrows a broad population to the target segment.' }
+        ],
+        milo: 'Say assumptions with confidence; you can revise them together.'
+      },
+      {
+        type: 'practice',
+        title: 'Friendly funnel',
+        content: 'Imagine a city with 1M people. 40% drink coffee, 50% prefer cafes, 3 cups per week at $4. What’s the weekly spend? (Say it or jot it.)',
+        visual: '☕️',
+        input: 'text',
+        answer: '',
+        feedbackCorrect: 'Awesome! Your math story matters more than the raw digits. You can always refine it later.',
+        feedbackIncorrect: 'No worries—walk through each filter and multiply step by step. You got this.',
+        milo: 'Celebrate the process, not perfection.',
+        keyTerms: [
+          { term: 'Sanity check', definition: 'A quick review to ensure your final number feels reasonable compared to the market size.' }
+        ]
+      },
+      {
+        type: 'info',
+        title: 'Ready for profit stories',
+        content: 'With market sizing in your toolkit, the next module shows how revenue and cost fit together in the core profit equation.',
+        visual: '➕',
+        milo: 'Onward to Profitability First Steps!',
+        keyTerms: [
+          { term: 'Bridge to profitability', definition: 'Connecting the size of an opportunity to how profit actually gets created.' }
+        ]
+      }
+    ],
+    quiz: [
+      {
+        id: 'foundations_sizing_q1',
+        question: 'Which sequence matches the top-down market sizing funnel taught in this lesson?',
+        options: [
+          'Price → Population → Frequency → Filters',
+          'Population → Filters → Frequency → Price',
+          'Frequency → Population → Mix → Price',
+          'Population → Price → Filters → Mix'
+        ],
+        correctAnswer: 1,
+        explanation: 'Start broad with population, filter to the target group, estimate frequency, then multiply by price.'
+      },
+      {
+        id: 'foundations_sizing_q2',
+        question: 'Why do we say assumptions out loud during sizing?',
+        options: [
+          'To show how quickly we can speak',
+          'So the interviewer can challenge or adjust them with you',
+          'Because silent math is considered rude',
+          'To prove we memorized exact statistics'
+        ],
+        correctAnswer: 1,
+        explanation: 'Sharing assumptions invites collaboration and keeps your math transparent.'
+      },
+      {
+        id: 'foundations_sizing_q3',
+        question: 'You estimate 200,000 cafe-goers drinking 3 cups at $4. What is the weekly spend?',
+        options: [
+          '$240,000',
+          '$2.4 million',
+          '$600,000',
+          '$4.8 million'
+        ],
+        correctAnswer: 1,
+        explanation: '200,000 guests × 3 cups × $4 = 2.4 million dollars per week.'
+      }
+    ]
+  },
+  {
+    id: 'foundations_profit',
+    moduleId: 'foundations_profit',
+    title: 'Profitability First Steps',
+    microLesson: [
+      {
+        type: 'info',
+        title: 'Profit at a glance',
+        content: 'Profit = Revenue – Cost. Cases often ask why profit changed. We look at both sides calmly.',
+        visual: '⚖️',
+        milo: 'Think of it as a story with two main characters: revenue and cost.',
+        keyTerms: [
+          { term: 'Profit equation', definition: 'A simple identity: Profit = Revenue – Cost. Investigate both sides to explain changes.' }
+        ]
+      },
+      {
+        type: 'info',
+        title: 'Revenue story',
+        content: 'Revenue is price × volume. If profit drops, we check whether price changed, volume changed, or customer mix shifted.',
+        visual: '💵',
+        milo: 'Ask “Did fewer people buy? Did we sell cheaper? Did we sell different stuff?”',
+        keyTerms: [
+          { term: 'Volume', definition: 'How many units or customers you serve.' },
+          { term: 'Mix', definition: 'The blend of products or customer segments contributing to revenue.' }
+        ]
+      },
+      {
+        type: 'info',
+        title: 'Cost story',
+        content: 'Costs can be fixed (rent, salaries) or variable (materials, shipping). Understanding which changed guides recommendations.',
+        visual: '📦',
+        milo: 'Try saying: “Let’s split the cost story into fixed vs. variable to see where the pressure sits.”',
+        keyTerms: [
+          { term: 'Fixed cost', definition: 'A cost that stays the same regardless of volume in the short term (e.g., rent).' },
+          { term: 'Variable cost', definition: 'A cost that scales with activity (e.g., materials per unit).' }
+        ]
+      },
+      {
+        type: 'example',
+        title: 'Mini example: Linking sizing to profit',
+        visual: '🧮',
+        example: {
+          prompt: 'You estimated a weekly cafe market of $2.4M. Now the interviewer asks why profit shrank.',
+          steps: [
+            { label: 'Bridge from sizing', detail: '“Earlier we saw strong demand—so let’s see if revenue or cost drivers changed.”' },
+            { label: 'Revenue check', detail: 'Less mall foot traffic lowered volume even though price stayed steady.' },
+            { label: 'Cost check', detail: 'Ingredient costs spiked, so variable costs rose faster than revenue.' }
+          ],
+          dialogue: [
+            { speaker: 'You', line: '“I’ll explore revenue first—volume, price, and mix—then split costs into fixed versus variable to spot the pressure.”' },
+            { speaker: 'Interviewer', line: '“Perfect—connect any findings back to our profit drop.”' }
+          ]
+        },
+        takeaway: 'You reused your funnel mindset (structured, transparent) and tied it to the profit equation. That connection wins trust.',
+        keyTerms: [
+          { term: 'Driver tree', definition: 'A simple visual that breaks profit into revenue and cost branches so you can test each lever.' }
+        ],
+        milo: 'Every new concept builds on the last. You’re stacking confidence layer by layer.'
+      },
+      {
+        type: 'practice',
+        title: 'Tell the tale',
+        content: 'Pick a simple example (lemonade stand, streaming app) and say one sentence about a revenue lever and one about a cost lever.',
+        visual: '📝',
+        input: 'text',
+        answer: '',
+        feedbackCorrect: 'Love it! You just described profit like a consultant.',
+        feedbackIncorrect: 'Give it a shot—just one sentence per lever is enough. Milo is cheering for you!',
+        milo: 'You’re ending this path stronger than you started.',
+        keyTerms: [
+          { term: 'Lever', definition: 'A knob you can turn—like price, volume, or cost efficiency—to change performance.' }
+        ]
+      },
+      {
+        type: 'info',
+        title: 'Path complete!',
+        content: 'You now have the foundations for Milo’s simulator and deeper lessons. Keep practicing and bring your energy to the next module.',
+        visual: '🎉',
+        milo: 'Badge unlocked! Ready for the simulator when you are.',
+        keyTerms: [
+          { term: 'Next step', definition: 'Apply your new toolkit in the Case Simulator or revisit any lesson for a quick confidence boost.' }
+        ]
+      }
+    ],
+    quiz: [
+      {
+        id: 'foundations_profit_q1',
+        question: 'Which equation captures the core profitability relationship?',
+        options: [
+          'Profit = Revenue + Cost',
+          'Profit = Revenue – Cost',
+          'Profit = Volume × Cost',
+          'Profit = Price – Volume'
+        ],
+        correctAnswer: 1,
+        explanation: 'Profit is calculated by subtracting total costs from total revenue.'
+      },
+      {
+        id: 'foundations_profit_q2',
+        question: 'If profit falls, which revenue breakdown helps you diagnose the issue?',
+        options: [
+          'Volume, price, and mix',
+          'Rent, utilities, and salaries',
+          'Marketing, HR, and legal',
+          'Competitors, suppliers, and customers'
+        ],
+        correctAnswer: 0,
+        explanation: 'Looking at volume, price, and mix reveals whether fewer customers bought, prices changed, or the product mix shifted.'
+      },
+      {
+        id: 'foundations_profit_q3',
+        question: 'Why do we split costs into fixed and variable buckets?',
+        options: [
+          'To make the math harder',
+          'To distinguish which costs move with volume versus those that stay steady',
+          'So we can ignore variable costs entirely',
+          'Because investors only care about fixed costs'
+        ],
+        correctAnswer: 1,
+        explanation: 'Separating fixed and variable costs shows whether volume or cost efficiency is pressuring profit.'
       }
     ]
   }
@@ -695,35 +515,60 @@ export const seedDemoData = () => {
   const demoUser = {
     id: 'demo',
     name: 'Demo',
-    xp: 120,
-    streak: 3,
-    coins: 50,
-    badges: ['🎯', '🔥', '⭐']
+    xp: 15,
+    streak: 2,
+    badges: ['🎯'],
+    dailyGoal: 20,
+    dailyXP: 0,
+    lastActiveDate: null
   };
-  
-  const demoProgress = {
-    'l1': { status: 'mastered', crownLevel: 3 },
-    'l2': { status: 'in_progress', crownLevel: 1 }
-  };
-  
+
   const today = new Date().toISOString().split('T')[0];
   const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-  const twoDaysAgo = new Date(Date.now() - 172800000).toISOString().split('T')[0];
-  
+
+  const demoProgress = {
+    foundations_intro: {
+      status: 'completed',
+      contentComplete: true,
+      quizPassed: true,
+      quizScore: 3,
+      totalQuestions: 3,
+      attempts: 1,
+      completedAt: today,
+      quizLastTriedAt: today
+    },
+    foundations_skills: {
+      status: 'in_progress',
+      contentComplete: true,
+      quizPassed: false,
+      quizScore: 2,
+      totalQuestions: 3,
+      attempts: 1,
+      quizLastTriedAt: today
+    }
+  };
+
+  const demoQuizStats = {
+    totalAttempts: 2,
+    totalPassed: 1,
+    totalQuestions: 6,
+    totalCorrect: 5
+  };
+
   const demoStreakHistory = {
-    [twoDaysAgo]: true,
     [yesterday]: true,
     [today]: true
   };
-  
+
   localStorage.setItem('casequest-storage', JSON.stringify({
-    state: { 
+    state: {
       user: demoUser,
       lessonProgress: demoProgress,
-      streakHistory: demoStreakHistory
+      streakHistory: demoStreakHistory,
+      quizStats: demoQuizStats
     },
     version: 0
   }));
-  
+
   return demoUser;
 };

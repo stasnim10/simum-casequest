@@ -1,17 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { AnimatePresence, motion } from 'framer-motion';
-import {
-  ArrowLeft,
-  ArrowRight,
-  CheckCircle,
-  ChevronDown,
-  ChevronUp,
-  Download,
-  Lightbulb,
-  RefreshCcw,
-  XCircle
-} from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle, ChevronDown, ChevronUp, Download, Lightbulb, RefreshCcw, XCircle } from 'lucide-react';
 import { track } from '../lib/analytics';
 import { getSimulatorCase } from '../data/api';
 
@@ -179,28 +168,19 @@ export default function CaseSimulator() {
           </div>
         </div>
 
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentStep.id}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -16 }}
-            transition={{ duration: 0.2 }}
-            className="bg-white rounded-3xl shadow-lg border border-white/40 p-8"
-          >
-            <StepComponent
-              step={currentStep}
-              value={responses[currentStep.id]}
-              onChange={(value) => handleStepChange(currentStep.id, value)}
-              onContinue={(value) => handleStepComplete(currentStep.id, value)}
-              responses={responses}
-              caseData={caseData}
-              caseId={caseData.id}
-              onRestart={handleRestart}
-              onExit={handleExit}
-            />
-          </motion.div>
-        </AnimatePresence>
+        <div className="bg-white rounded-3xl shadow-lg border border-white/40 p-8">
+          <StepComponent
+            step={currentStep}
+            value={responses[currentStep.id]}
+            onChange={(value) => handleStepChange(currentStep.id, value)}
+            onContinue={(value) => handleStepComplete(currentStep.id, value)}
+            responses={responses}
+            caseData={caseData}
+            caseId={caseData.id}
+            onRestart={handleRestart}
+            onExit={handleExit}
+          />
+        </div>
 
         <div className="mt-6 flex justify-between">
           <button

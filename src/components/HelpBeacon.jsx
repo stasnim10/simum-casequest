@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { LifeBuoy, X, ChevronRight } from 'lucide-react';
 
 const FAQ = [
@@ -18,6 +18,7 @@ const FAQ = [
 ];
 
 export default function HelpBeacon() {
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
 
   return (
@@ -31,23 +32,15 @@ export default function HelpBeacon() {
         Help
       </button>
 
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
-            onClick={() => setOpen(false)}
+      {open && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+          onClick={() => setOpen(false)}
+        >
+          <div
+            className="w-full max-w-md mx-4 bg-white rounded-2xl shadow-2xl p-6 space-y-4"
+            onClick={(e) => e.stopPropagation()}
           >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-              className="w-full max-w-md mx-4 bg-white rounded-2xl shadow-2xl p-6 space-y-4"
-              onClick={(e) => e.stopPropagation()}
-            >
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">Need a hand?</h3>
@@ -74,20 +67,31 @@ export default function HelpBeacon() {
                 ))}
               </div>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setOpen(false);
-                  window.dispatchEvent(new CustomEvent('casequest:tutorial:replay'));
-                }}
-                className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700"
-              >
-                Replay quick tutorial
-              </button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              <div className="grid gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOpen(false);
+                    navigate('/learn');
+                  }}
+                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700"
+                >
+                  Open learning modules
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOpen(false);
+                    navigate('/simulator');
+                  }}
+                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl border border-indigo-200 text-indigo-600 hover:bg-indigo-50"
+                >
+                  Launch simulator
+                </button>
+              </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

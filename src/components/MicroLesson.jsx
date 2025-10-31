@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowLeft, ArrowRight, Lightbulb, Mic, Sparkles, RefreshCcw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import useStore from '../state/store';
 import { track } from '../lib/analytics';
+import MiloExplains from './MiloExplains';
+
+const MotionStep = motion.div;
 
 const recognize = () => {
   if (typeof window === 'undefined') return null;
@@ -20,7 +23,7 @@ function normalizeNumber(answer) {
 export default function MicroLesson({ lesson, lessonId }) {
   const navigate = useNavigate();
   const startLesson = useStore((state) => state.startLesson);
-  const completeLesson = useStore((state) => state.completeLesson);
+  const markLessonContentComplete = useStore((state) => state.markLessonContentComplete);
 
   const steps = lesson.microLesson || [];
   const [index, setIndex] = useState(0);
@@ -113,6 +116,8 @@ export default function MicroLesson({ lesson, lessonId }) {
       if (expected !== null && given !== null && Math.abs(given - expected) <= tolerance) {
         correct = true;
       }
+    } else if (input === 'text') {
+      correct = true;
     } else if (input === 'mcq') {
       correct = valueToUse === answer;
     } else {
@@ -164,11 +169,11 @@ export default function MicroLesson({ lesson, lessonId }) {
 
   const handleFinishLesson = () => {
     if (!lessonFinished) {
-      completeLesson(lessonId, { correct: 1, total: 1 });
-      track('micro_lesson_completed', { lessonId });
+      markLessonContentComplete(lessonId);
+      track('micro_lesson_completed', { lessonId, mode: 'content' });
       setLessonFinished(true);
     }
-    navigate('/learn');
+    navigate(`/quiz/${lessonId}`);
   };
 
   if (!current) {
@@ -186,6 +191,22 @@ export default function MicroLesson({ lesson, lessonId }) {
       });
       return next;
     });
+  };
+
+  const renderKeyTerms = () => {
+    if (!current?.keyTerms?.length) return null;
+    return (
+      <div className="space-y-3">
+        {current.keyTerms.map((term) => (
+          <MiloExplains
+            key={term.term}
+            term={term.term}
+            definition={term.definition}
+            label={term.label || 'Milo explains'}
+          />
+        ))}
+      </div>
+    );
   };
 
   const renderPracticeInput = () => {
@@ -257,7 +278,7 @@ export default function MicroLesson({ lesson, lessonId }) {
             onClick={handleCheckPractice}
             className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700"
           >
-            Check answer
+            {current.input === 'text' ? 'Save reflection' : 'Check answer'}
           </button>
           {current.hint && (
             <button
@@ -279,15 +300,16 @@ export default function MicroLesson({ lesson, lessonId }) {
 
   const renderContent = () => {
     if (current.type === 'practice') {
-      return (
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <h2 className="text-xl font-semibold text-gray-900">{current.title}</h2>
-            <p className="text-gray-700 leading-relaxed">{current.content}</p>
-          </div>
-          <div className="text-3xl" aria-hidden>{current.visual}</div>
-          {renderPracticeInput()}
-          {practiceResult && (
+    return (
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <h2 className="text-xl font-semibold text-gray-900">{current.title}</h2>
+          <p className="text-gray-700 leading-relaxed">{current.content}</p>
+        </div>
+        <div className="text-3xl" aria-hidden>{current.visual}</div>
+        {renderKeyTerms()}
+        {renderPracticeInput()}
+        {practiceResult && (
             <div
               className={`rounded-2xl border p-4 text-sm leading-relaxed ${
                 practiceResult.status === 'correct'
@@ -374,6 +396,54 @@ export default function MicroLesson({ lesson, lessonId }) {
       );
     }
 
+    if (current.type === 'example') {
+      return (
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <h2 className="text-xl font-semibold text-gray-900">{current.title}</h2>
+            <p className="text-gray-700 leading-relaxed">{current.example?.prompt}</p>
+          </div>
+          <div className="text-3xl" aria-hidden>{current.visual}</div>
+          {current.example?.dialogue?.length ? (
+            <div className="space-y-2 rounded-2xl border border-indigo-100 bg-indigo-50/60 p-4 text-sm text-indigo-900">
+              {current.example.dialogue.map((line, idx) => (
+                <p key={idx} className="leading-relaxed">
+                  <span className="font-semibold">{line.speaker}:</span> {line.line}
+                </p>
+              ))}
+            </div>
+          ) : null}
+          {current.example?.steps?.length ? (
+            <div className="rounded-2xl border border-gray-100 bg-white p-4">
+              <p className="text-xs uppercase tracking-wide text-gray-500 font-semibold mb-2">How it flows</p>
+              <ol className="space-y-2 text-sm text-gray-700 list-decimal list-inside">
+                {current.example.steps.map((step, idx) => (
+                  <li key={idx}>
+                    <span className="font-semibold">{step.label}</span>
+                    {step.detail ? ` — ${step.detail}` : ''}
+                  </li>
+                ))}
+              </ol>
+            </div>
+          ) : null}
+          {current.takeaway ? (
+            <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-700">
+              {current.takeaway}
+            </div>
+          ) : null}
+          {renderKeyTerms()}
+          <button
+            type="button"
+            onClick={goNext}
+            className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700"
+          >
+            Continue
+            <ArrowRight className="w-5 h-5" />
+          </button>
+        </div>
+      );
+    }
+
     return (
       <div className="space-y-4">
         <div className="flex items-center gap-3 text-indigo-600 font-semibold">
@@ -382,6 +452,7 @@ export default function MicroLesson({ lesson, lessonId }) {
         </div>
         <p className="text-gray-700 leading-relaxed">{Array.isArray(current.content) ? current.content.join('\n') : current.content}</p>
         <div className="text-3xl" aria-hidden>{current.visual}</div>
+        {renderKeyTerms()}
         {index < steps.length - 1 && (
           <button
             type="button"
@@ -407,7 +478,7 @@ export default function MicroLesson({ lesson, lessonId }) {
           className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back to learning path
+          Back to learning modules
         </button>
 
         <div className="bg-white rounded-3xl shadow-xl border border-indigo-100 p-6">
@@ -416,7 +487,7 @@ export default function MicroLesson({ lesson, lessonId }) {
             <span>Step {index + 1} of {steps.length}</span>
           </div>
           <AnimatePresence mode="wait">
-            <motion.div
+            <MotionStep
               key={index}
               initial={{ opacity: 0, x: 24 }}
               animate={{ opacity: 1, x: 0 }}
@@ -428,7 +499,7 @@ export default function MicroLesson({ lesson, lessonId }) {
               <p className="text-sm text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-xl px-4 py-3">
                 Coach Milo: {current.milo}
               </p>
-            </motion.div>
+            </MotionStep>
           </AnimatePresence>
         </div>
 

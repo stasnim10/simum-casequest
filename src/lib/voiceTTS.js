@@ -1,6 +1,4 @@
 import { track } from './analytics';
-
-let currentUtterance = null;
 let voicePrefs = JSON.parse(localStorage.getItem('cq_voice_prefs') || '{"rate":1.05,"pitch":1,"volume":1,"voiceName":null}');
 
 export function getVoices() {
@@ -40,7 +38,6 @@ export function speak(text, voice = null, rate = null) {
   utterance.onstart = () => track('tts_spoken', { chars: text.length });
   utterance.onerror = (e) => console.error('TTS error:', e);
   
-  currentUtterance = utterance;
   window.speechSynthesis.speak(utterance);
   return true;
 }
@@ -48,7 +45,6 @@ export function speak(text, voice = null, rate = null) {
 export function cancelSpeech() {
   if (window.speechSynthesis) {
     window.speechSynthesis.cancel();
-    currentUtterance = null;
   }
 }
 
