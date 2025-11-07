@@ -64,6 +64,7 @@ const useStore = create(
       lessonProgress: {},
       streakHistory: {},
       quizStats: defaultQuizStats(),
+      hintUsage: {},
 
       setUser: (user) => set({ user: normalizeUser(user) }),
 
@@ -72,6 +73,7 @@ const useStore = create(
           lessonProgress: {},
           streakHistory: {},
           quizStats: defaultQuizStats(),
+          hintUsage: {},
           user: normalizeUser(get().user)
         }),
 
@@ -225,6 +227,33 @@ const useStore = create(
           };
         }),
 
+      trackHintUsage: (caseId = 'global', hintText = '') =>
+        set((state) => {
+          const current = state.hintUsage[caseId] || { hintsUsed: 0, lastHint: '' };
+          return {
+            hintUsage: {
+              ...state.hintUsage,
+              [caseId]: {
+                hintsUsed: current.hintsUsed + 1,
+                lastHint: hintText
+              }
+            }
+          };
+        }),
+
+      getHintUsage: (caseId = 'global') => {
+        const current = get().hintUsage[caseId];
+        return current ? current.hintsUsed : 0;
+      },
+
+      resetHintUsage: (caseId = 'global') =>
+        set((state) => {
+          if (!state.hintUsage[caseId]) return state;
+          const next = { ...state.hintUsage };
+          delete next[caseId];
+          return { hintUsage: next };
+        }),
+
       logQuizMistake: (payload) => {
         appendQuizInsight({
           ...payload,
@@ -249,7 +278,8 @@ const useStore = create(
         user: state.user,
         lessonProgress: state.lessonProgress,
         streakHistory: state.streakHistory,
-        quizStats: state.quizStats
+        quizStats: state.quizStats,
+        hintUsage: state.hintUsage
       }),
       merge: undefined
     }

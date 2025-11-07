@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, CheckCircle, ChevronDown, ChevronUp, Download, Lightbulb, RefreshCcw, XCircle } from 'lucide-react';
 import { track } from '../lib/analytics';
 import { getSimulatorCase } from '../data/api';
+import CaseHint from '../components/CaseHint.jsx';
 
 const DEFAULT_CASE_SLUG = 'profitability-case-1';
 
@@ -48,6 +49,19 @@ export default function CaseSimulator() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [caseData, activeStepIdx]);
 
+  const steps = caseData?.steps ?? [];
+  const currentStep = steps[activeStepIdx];
+  const StepComponent = currentStep ? stepRegistry[currentStep.type] ?? UnknownStep : UnknownStep;
+  const hintContext = useMemo(
+    () => ({
+      id: caseData?.id,
+      type: caseData?.category,
+      step: currentStep?.type,
+      subtopic: currentStep?.title
+    }),
+    [caseData?.category, caseData?.id, currentStep?.title, currentStep?.type]
+  );
+
   if (!caseData) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
@@ -65,10 +79,6 @@ export default function CaseSimulator() {
       </div>
     );
   }
-
-  const steps = caseData.steps;
-  const currentStep = steps[activeStepIdx];
-  const StepComponent = stepRegistry[currentStep.type] ?? UnknownStep;
 
   const handleStepChange = (stepId, value) => {
     setResponses((prev) => ({ ...prev, [stepId]: value }));
@@ -169,6 +179,13 @@ export default function CaseSimulator() {
         </div>
 
         <div className="bg-white rounded-3xl shadow-lg border border-white/40 p-8">
+          <div className="mb-6 flex justify-end">
+            <CaseHint
+              caseContext={hintContext}
+              caseId={caseData.id}
+              userProgress={{ stepIndex: activeStepIdx, totalSteps: steps.length }}
+            />
+          </div>
           <StepComponent
             step={currentStep}
             value={responses[currentStep.id]}

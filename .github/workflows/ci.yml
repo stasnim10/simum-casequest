@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  python-tests:
+    name: Python tests (precompute)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install Python test deps
+        run: |
+          if [ -f requirements-dev.txt ]; then
+            python -m pip install -U -r requirements-dev.txt
+          else
+            python -m pip install -U pytest
+          fi
+
+      - name: Run Python precompute tests
+        run: |
+          python -m pytest tests/test_precompute_embeddings_local.py -q
+
+      - name: Upload Python test results (optional)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-test-logs
+          path: ./  # change to log files if you add them
+
+  node-tests:
+    name: Node checks (lint + vitest)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Run targeted unit tests (Vitest)
+        run: |
+          npx vitest run tests/hintService.test.js tests/caseHint.a11y.test.jsx tests/embeddingsCache.test.js tests/embeddingsVersion.test.js tests/semanticSearchStatus.test.jsx
+
+      - name: Upload vitest results (optional)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vitest-results
+          path: ./  # change to actual test output path if using reporters
